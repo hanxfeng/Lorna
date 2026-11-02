@@ -279,21 +279,41 @@ namespace AdmirerLona
         }
 
         /// <summary>
-        /// 第一次见面的收尾台词改成「下次见」，说完离开。
-        /// 买完东西时游戏播的是 acceptDealDialogue（原版是「就这么定了」），
-        /// allDoneDialogue 是"事办完了"时才播的，两个都覆盖掉。
+        /// 第一次见面：想买几样就买几样，玩家点「离开」时才说「下次见」然后走。
+        /// · acceptDealDialogue 置空 —— 每次成交后不再播原版的「就这么定了 / 还有别的事吗」
+        /// · tryInterceptDismiss 拦截第一次离场，播完告别台词再真正离开
         /// </summary>
         private static void ApplyVisitOverrides(StoreClient client, LonaVisit visit)
         {
             if (visit != LonaVisit.FirstPurchase) return;
 
+            client.acceptDealDialogue = null;
+            client.acceptDealDialogueLastLine = null;
+            client.allDoneDialogue = BuildFarewell(client);
+            client.tryInterceptDismiss = delegate { return PlayFarewell(client); };
+        }
+
+        private static Dialogue BuildFarewell(StoreClient client)
+        {
             Dialogue farewell = new Dialogue();
             farewell.SetText(client.displayName, LonaText.FirstPurchaseFarewell());
             farewell.SetEndAction(DismissLona);
+            return farewell;
+        }
 
-            client.acceptDealDialogue = farewell;
-            client.acceptDealDialogueLastLine = null;
-            client.allDoneDialogue = farewell;
+        /// <summary>点离开时先播「下次见」，返回 true 取消这次离场；台词播完再由 DismissLona 走。</summary>
+        private static bool PlayFarewell(StoreClient client)
+        {
+            try
+            {
+                if (DialogUIManager.Instance == null) return false;
+                return DialogUIManager.Instance.StartDialogue(BuildFarewell(client));
+            }
+            catch (Exception e)
+            {
+                ModEntry.Log("告别台词失败: " + e.Message);
+                return false;
+            }
         }
 
         // ---------------------------------------------------------------
