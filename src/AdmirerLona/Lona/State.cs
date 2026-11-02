@@ -11,7 +11,7 @@ namespace AdmirerLona
     internal static class State
     {
         public const string ModId = "admirer_lona";
-        public const string BaseModId = "pawnshop_mod";
+        public const string BaseModId = "Enhanced_Secret_Admirers_And_More_News";
 
         /// <summary>首次出现所需的「下层区声望」阈值，玩家可在模组配置里改。</summary>
         public static ConfigEntry<int> UnlockRep;

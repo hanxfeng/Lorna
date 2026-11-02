@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AdmirerLona
 {
     /// <summary>
-    /// 卖药警告纸条，以及与前置模组（pawnshop_mod）纸条的互斥。
+    /// 卖药警告纸条，以及与前置模组（Enhanced_Secret_Admirers_And_More_News）纸条的互斥。
     /// 互斥实现：直接写前置模组的私有存档键 npc_done_&lt;id&gt;，让它当天的 DeliverPending 跳过。
     /// </summary>
     internal static class Notes
@@ -145,7 +145,7 @@ namespace AdmirerLona
             if (mod == null)
             {
                 state = StMissing;
-                reason = "前置模组 pawnshop_mod 未安装或未启用";
+                reason = "前置模组 Enhanced_Secret_Admirers_And_More_News 未安装或未启用";
                 Debug.LogError("[AdmirerLona] " + reason + "，洛娜功能已停用。");
                 return;
             }

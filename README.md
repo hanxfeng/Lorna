@@ -1,6 +1,6 @@
 # 神秘仰慕者洛娜（admirer_lona）
 
-《深空当铺》（Probably Stolen 0.46D）模组，是 **《更好的神秘仰慕者和更多新闻》（`pawnshop_mod`）的附属模组**。
+《深空当铺》（Probably Stolen 0.46D）模组，是 **《更好的神秘仰慕者和更多新闻》（`Enhanced_Secret_Admirers_And_More_News`）的附属模组**。
 洛娜是前置模组里那个匿名写信的仰慕者；装上本模组后，她会作为剧情人物亲自出现。
 
 当前版本 **0.2.0**：核心系统已实现，**文案、灯牌货品映射、立绘仍是占位**。
@@ -11,7 +11,7 @@
 
 | 项 | 规则 |
 | --- | --- |
-| 前置 | 需启用 `pawnshop_mod`，并拥有「神秘仰慕者」天赋 |
+| 前置 | 需启用 `Enhanced_Secret_Admirers_And_More_News`，并拥有「神秘仰慕者」天赋 |
 | 首次出现声望 | 模组配置里可调（滑条 0–200，默认 150） |
 | 初始好感 | `floor((激活时下层区声望 − 10) / 2)`，最小 0 |
 | 好感变化 | 声望每 +2 → 好感 +1（即声望增量的 50%）；卖芬太片/梦尘 −10 |
@@ -40,7 +40,7 @@
 | 便携 .NET SDK 8.0.427 | `tools\dotnet-sdk\dotnet.exe` |
 | 游戏反编译源码（只读） | `.ref\game\`，931 个 `.cs` |
 | 官方教程快照 | `docs\probably-stolen-modding\` |
-| 前置模组 | 创意工坊 `3829961729`（id `pawnshop_mod`） |
+| 前置模组 | 创意工坊 `3829961729`（id `Enhanced_Secret_Admirers_And_More_News`） |
 
 ---
 
@@ -77,7 +77,7 @@
 
 ### 游戏内测试
 
-1. 启动游戏 →「模组」菜单：先启用 `pawnshop_mod`，再启用「神秘仰慕者洛娜」；
+1. 启动游戏 →「模组」菜单：先启用 `Enhanced_Secret_Admirers_And_More_News`，再启用「神秘仰慕者洛娜」；
 2. 需要一个带「神秘仰慕者」天赋的存档（新档选天赋，或改造现有存档）；
 3. F9 → **Special** 页 →「Lorna 测试面板」，里面可以：
    - 让下一位顾客是洛娜（来买 / 来卖 / 只说话）
@@ -107,7 +107,7 @@ F8 控制台过滤 `[AdmirerLona]`。前置模组私有键检测失败时**只�
 ## 六、三条硬约定
 
 1. **不要引用 `PawnshopMod.dll`**——扫描器会判 `unlisted-reference` 并拒绝启用。
-2. 依赖写在 `manifest.xml` 的 `<Prerequisites><Mod>pawnshop_mod</Mod></Prerequisites>`。
+2. 依赖写在 `manifest.xml` 的 `<Prerequisites><Mod>Enhanced_Secret_Admirers_And_More_News</Mod></Prerequisites>`。
 3. 运行时互调只用 `ModHelper`（读数据）或反射（需声明 `reflection-external`）。
 
 ---

@@ -4,13 +4,13 @@
   <Name>神秘仰慕者洛娜</Name>
   <Author>韩行风</Author>
   <ModVersion>0.2.0</ModVersion>
-  <Description>《更好的神秘仰慕者和更多新闻》的附属模组：神秘仰慕者洛娜作为剧情人物登场，含好感度、日常与特殊剧情、卖药警告纸条。需要先启用前置模组 pawnshop_mod，并拥有「神秘仰慕者」天赋。</Description>
+  <Description>《更好的神秘仰慕者和更多新闻》的附属模组：神秘仰慕者洛娜作为剧情人物登场，含好感度、日常与特殊剧情、卖药警告纸条。需要先启用前置模组《更好的神秘仰慕者和更多新闻》，并拥有「神秘仰慕者」天赋。</Description>
   <GameVersions>
     <Version>0.46</Version>
   </GameVersions>
   <!-- 前置模组：文件夹 id，不是显示名。缺少时加载器只警告，不会禁用。 -->
   <Prerequisites>
-    <Mod>pawnshop_mod</Mod>
+    <Mod>Enhanced_Secret_Admirers_And_More_News</Mod>
   </Prerequisites>
   <!-- Every DLL the game must load, relative to this folder. Nothing else in the folder is loaded.
        注意：这里不要写 PawnshopMod.dll，那是别的模组文件夹里的文件。 -->

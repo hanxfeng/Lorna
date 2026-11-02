@@ -12,8 +12,8 @@ namespace AdmirerLona
     /// </summary>
     public class ModEntry : IMod
     {
-        /// <summary>前置模组的文件夹 id，与 manifest.xml 的 &lt;Prerequisites&gt; 保持一致。</summary>
-        public const string PrerequisiteId = "pawnshop_mod";
+        /// <summary>前置模组的文件夹 id，与 manifest.xml 的 &lt;Prerequisites&gt; 保持一致（唯一来源见 State.BaseModId）。</summary>
+        public const string PrerequisiteId = State.BaseModId;
 
         public static ModEntry Instance { get; private set; }
         public ModManifest Manifest { get; private set; }
@@ -84,7 +84,7 @@ namespace AdmirerLona
             }
         }
 
-        /// <summary>前置模组 pawnshop_mod 是否已加载并启用。</summary>
+        /// <summary>前置模组 Enhanced_Secret_Admirers_And_More_News 是否已加载并启用。</summary>
         public bool IsPrerequisiteReady()
         {
             foreach (LoadedMod mod in ModLoader.Mods)
