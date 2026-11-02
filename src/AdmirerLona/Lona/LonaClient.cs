@@ -287,7 +287,15 @@ namespace AdmirerLona
         {
             if (visit != LonaVisit.FirstPurchase) return;
 
-            client.acceptDealDialogue = null;
+            // 每成交一件都说一句「……」，替代原版的「还有什么事吗？」。
+            // 关键：这个对话是在 CompleteClientCreation 之后挂上的，没有接 OnDealAccepted，
+            // 所以不会再把原版收尾对话带出来；成交时把 played 标志重置，下一件继续播。
+            Dialogue chatter = new Dialogue();
+            chatter.SetText(client.displayName, LonaText.FirstPurchaseChatter());
+            client.acceptDealDialogue = chatter;
+            client.acceptDealDialoguePlayed = false;
+            client.onItemBought = delegate { client.acceptDealDialoguePlayed = false; };
+
             client.acceptDealDialogueLastLine = null;
             client.allDoneDialogue = BuildFarewell(client);
             client.tryInterceptDismiss = delegate { return PlayFarewell(client); };

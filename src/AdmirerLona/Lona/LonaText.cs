@@ -150,6 +150,12 @@ namespace AdmirerLona
             return Get("lona_first1_06", "下次见");
         }
 
+        /// <summary>第一段里每成交一件时她说的话（替代原版「还有什么事吗？」）。</summary>
+        public static string FirstPurchaseChatter()
+        {
+            return Get("lona_first1_07", "……");
+        }
+
         // ---------------- 初次见面 · 第二段（揭面） ----------------
         public static List<LonaLine> RevealLines()
         {
