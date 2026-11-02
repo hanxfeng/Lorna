@@ -3,7 +3,7 @@
   <ID>admirer_lona</ID>
   <Name>神秘仰慕者洛娜</Name>
   <Author>韩行风</Author>
-  <ModVersion>0.3.7</ModVersion>
+  <ModVersion>0.3.8</ModVersion>
   <Description>《更好的神秘仰慕者和更多新闻》的附属模组：神秘仰慕者洛娜作为剧情人物登场，含好感度、日常与特殊剧情、卖药警告纸条。需要先启用前置模组《更好的神秘仰慕者和更多新闻》，并拥有「神秘仰慕者」天赋。</Description>
   <GameVersions>
     <Version>0.46</Version>

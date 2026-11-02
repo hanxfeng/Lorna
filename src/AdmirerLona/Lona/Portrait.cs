@@ -145,7 +145,7 @@ namespace AdmirerLona
 
         private static void Inject(string key, float scale)
         {
-            Texture2D texture = GetModTexture(key);
+            Texture2D texture = MakeCrisp(GetModTexture(key));
             if (texture == null)
             {
                 ModEntry.Log("立绘占位：" + key + ".png 不存在，使用原版立绘");
@@ -162,6 +162,36 @@ namespace AdmirerLona
                          " scale=" + scale.ToString("0.##") +
                          " 世界=" + (texture.width / sprite.pixelsPerUnit).ToString("0.##") + "x" +
                          (texture.height / sprite.pixelsPerUnit).ToString("0.##") + ")");
+        }
+
+        /// <summary>
+        /// 模组加载器给 Textures/ 下的通用贴图建的是带 mipmap 的纹理，
+        /// 缩小采样时会糊。这里复制一份无 mipmap 的贴图再用。
+        /// </summary>
+        private static Texture2D MakeCrisp(Texture2D source)
+        {
+            if (source == null) return null;
+            try
+            {
+                if (!source.isReadable)
+                {
+                    ModEntry.Log("立绘贴图不可读，无法去掉 mipmap");
+                    return source;
+                }
+
+                Texture2D copy = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
+                copy.SetPixels32(source.GetPixels32());
+                copy.Apply(false, false);
+                copy.filterMode = FilterMode.Point;
+                copy.wrapMode = TextureWrapMode.Clamp;
+                copy.anisoLevel = 0;
+                return copy;
+            }
+            catch (Exception e)
+            {
+                ModEntry.Log("重建立绘贴图失败: " + e.Message);
+                return source;
+            }
         }
 
         private static Texture2D GetModTexture(string key)

@@ -108,7 +108,7 @@ namespace AdmirerLona
             ModEntry.Log(string.Format(
                 "state: activated={0} rep={1} need={2} affection={3:0.##} tier={4} left={5} firstSeen={6} " +
                 "firstAppearDay={7} drugCount={8} pendingNoteDay={9} pendingSpecial={10} schema={11}",
-                State.Activated, State.Reputation, State.UnlockRep != null ? State.UnlockRep.Value : 150,
+                State.Activated, State.Reputation, State.UnlockRepValue,
                 State.Affection, State.DailyTier, State.Left, State.FirstSeen,
                 State.FirstAppearDay, State.DrugCount, State.PendingNoteDay,
                 State.PendingSpecial, BaseModSchema.Ok ? "ok" : BaseModSchema.Reason));

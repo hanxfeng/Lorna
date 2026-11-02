@@ -21,7 +21,13 @@ namespace AdmirerLona
 
         public static float PortraitScaleValue
         {
-            get { return PortraitScale != null ? PortraitScale.Value : 0.75f; }
+            get { return PortraitScale != null ? Mathf.Clamp(PortraitScale.Value, 0.2f, 2f) : 0.75f; }
+        }
+
+        /// <summary>首次出现声望阈值（0–200）。</summary>
+        public static int UnlockRepValue
+        {
+            get { return UnlockRep != null ? Mathf.Clamp(UnlockRep.Value, 0, 200) : 150; }
         }
 
         private const string KActivated = "activated";
@@ -70,17 +76,16 @@ namespace AdmirerLona
         public static void DefineConfig(string modId)
         {
             ModConfig config = ModHelper.GetConfig(modId);
+            // 不带 min/max：配置面板里是数字输入框，不是滑条。
             UnlockRep = config.Define(
                 "unlock_rep", 150, "Lorna",
                 () => "首次出现声望",
-                min: 0, max: 200,
-                tooltip: () => "下层区声望达到该值的第二天，洛娜第一次出现。");
+                tooltip: () => "下层区声望达到该值的第二天，洛娜第一次出现（0–200）。");
 
             PortraitScale = config.Define(
                 "portrait_scale", 0.75f, "Lorna",
                 () => "立绘缩放",
-                min: 0.4f, max: 1.2f,
-                tooltip: () => "1 = 和画布同尺寸；越小人物越矮。改完下次开门生效。");
+                tooltip: () => "1 = 和画布同尺寸；越小人物越矮（0.2–2）。改完下次开门生效。");
         }
 
         // ---------------------------------------------------------------
@@ -230,7 +235,7 @@ namespace AdmirerLona
             if (!StartingPerk.IsSecretAdmirer()) return;
 
             int rep = Reputation;
-            int need = UnlockRep != null ? UnlockRep.Value : 150;
+            int need = UnlockRepValue;
             if (rep < need) return;
 
             SetBool(KActivated, true);
