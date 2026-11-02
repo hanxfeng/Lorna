@@ -26,7 +26,7 @@ namespace AdmirerLona
     /// <summary>顾客生成阶段的出场逻辑。</summary>
     internal static class Spawner
     {
-        /// <summary>临时值：150 声望之后每天出现的概率（百分比）。</summary>
+        /// <summary>临时值：揭面之后每天出现的概率（百分比）。</summary>
         public const int AppearChance = 25;
 
         /// <summary>临时值：两次到访之间至少隔几天。</summary>
@@ -34,6 +34,9 @@ namespace AdmirerLona
 
         /// <summary>150 声望之前顶替小偷的概率（百分比）。</summary>
         public const int ThiefReplaceChance = 10;
+
+        /// <summary>第一次见面之后，隔几天来揭面。</summary>
+        public const int RevealDelayDays = 3;
 
         private static readonly string[] ThiefIds = { "thief", "pettyThief", "foodThief" };
 
@@ -68,19 +71,33 @@ namespace AdmirerLona
                     return;
                 }
 
-                // ---- 首次登场：阈值后第二天 ----
+                // ---- 第一段：来买食物 ----
                 if (!State.FirstSeen)
                 {
                     int day = State.FirstAppearDay;
                     if (day < 0 || State.Today >= day)
                     {
-                        InsertFront(manager, LonaClient.Create(LonaVisit.Story, LonaStory.FirstMeet));
-                        State.MarkFirstSeen();
-                        State.MarkVisited();
+                        InsertFront(manager, LonaClient.Create(LonaVisit.FirstPurchase, LonaStory.FirstMeet));
+                        State.MarkFirstMet();
                         Gift.Reset();
-                        ModEntry.Log("首次登场：第 " + State.Today + " 天");
-                        return;
+                        ModEntry.Log("初次见面（第一段）：第 " + State.Today + " 天");
                     }
+                    return;
+                }
+
+                // ---- 第二段：三天后揭面，期间她不再出现 ----
+                if (!State.Revealed)
+                {
+                    int revealDay = State.FirstMetDay + RevealDelayDays;
+                    if (State.Today >= revealDay)
+                    {
+                        State.PauseBaseNotesToday();
+                        InsertFront(manager, LonaClient.Create(LonaVisit.Reveal, LonaStory.FirstMeet));
+                        State.MarkRevealed();
+                        Gift.Reset();
+                        ModEntry.Log("初次见面（第二段·揭面）：第 " + State.Today + " 天");
+                    }
+                    return;
                 }
 
                 // ---- 待播的特殊剧情 ----

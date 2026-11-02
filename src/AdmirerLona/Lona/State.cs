@@ -32,6 +32,12 @@ namespace AdmirerLona
         private const string KPendingNoteDay = "pending_note_day";
         private const string KPendingNoteIndex = "pending_note_index";
         private const string KLastVisitDay = "last_visit_day";
+        private const string KFirstMetDay = "first_met_day";
+        private const string KRevealed = "revealed";
+
+        // 下面两个键写在「前置模组」的 mod data 命名空间里，由前置模组读取。
+        public const string KNotesPauseUntilRep = "notes_pause_until_rep";
+        public const string KNotesPauseDay = "notes_pause_day";
 
         // ---- 运行时（不存档） ----
         public static bool GiftMode;
@@ -137,6 +143,57 @@ namespace AdmirerLona
             get { return GetInt(KPendingNoteDay, -1); }
         }
 
+        /// <summary>第一次见面（来买食物那次）当天。</summary>
+        public static int FirstMetDay
+        {
+            get { return GetInt(KFirstMetDay, -1); }
+        }
+
+        /// <summary>是否已经在第二段剧情里揭面。</summary>
+        public static bool Revealed
+        {
+            get { return GetBool(KRevealed); }
+        }
+
+        public static void MarkFirstMet()
+        {
+            SetBool(KFirstSeen, true);
+            SetInt(KFirstMetDay, Today);
+            Log("First met on day " + Today);
+        }
+
+        public static void MarkRevealed()
+        {
+            SetBool(KRevealed, true);
+            Log("Revealed on day " + Today);
+        }
+
+        // ---------------- 前置模组的纸条暂停 ----------------
+
+        /// <summary>暂停前置模组发放纸条，直到下层区声望达到 untilRep。</summary>
+        public static void PauseBaseNotesUntil(int untilRep)
+        {
+            ModHelper.SetModDataInt(BaseModId, KNotesPauseUntilRep, untilRep);
+            Log("Paused base notes until rep " + untilRep + " (now " + Reputation + ")");
+        }
+
+        /// <summary>只暂停今天一天（洛娜揭面那天，压掉门口的纸条+礼物）。</summary>
+        public static void PauseBaseNotesToday()
+        {
+            ModHelper.SetModDataInt(BaseModId, KNotesPauseDay, Today);
+        }
+
+        /// <summary>声望已经够了就清掉暂停键（前置模组自己也会判断，这里只是保持干净）。</summary>
+        public static void ClearPauseIfReached()
+        {
+            int until = ModHelper.GetModDataInt(BaseModId, KNotesPauseUntilRep, int.MinValue);
+            if (until != int.MinValue && Reputation >= until)
+            {
+                ModHelper.RemoveModData(BaseModId, KNotesPauseUntilRep);
+                Log("Base notes resumed at rep " + Reputation);
+            }
+        }
+
         // ---------------------------------------------------------------
         // 生命周期
         // ---------------------------------------------------------------
@@ -145,6 +202,12 @@ namespace AdmirerLona
         {
             if (!Ready) return;
             CheckActivation();
+
+            // 老存档迁移：已经见过面但没有记录见面日，就从今天算起。
+            if (Activated && FirstSeen && FirstMetDay < 0)
+            {
+                SetInt(KFirstMetDay, Today);
+            }
         }
 
         /// <summary>检查是否满足激活条件；一旦激活就永久保留。</summary>
@@ -213,11 +276,6 @@ namespace AdmirerLona
                 SetBool(KReach100, true);
                 PendingSpecial = LonaStory.Reach100.ToString();
             }
-        }
-
-        public static void MarkFirstSeen()
-        {
-            SetBool(KFirstSeen, true);
         }
 
         public static void MarkVisited()
@@ -318,9 +376,12 @@ namespace AdmirerLona
             {
                 KActivated, KActivationRep, KAffection, KLeft, KFirstSeen, KFirstAppearDay,
                 KPendingSpecial, KBelow70, KAbove80, KAbove90, KReach100,
-                KDrugCount, KLastDrugDay, KPendingNoteDay, KPendingNoteIndex, KLastVisitDay
+                KDrugCount, KLastDrugDay, KPendingNoteDay, KPendingNoteIndex, KLastVisitDay,
+                KFirstMetDay, KRevealed
             };
             foreach (string key in keys) ModHelper.RemoveModData(ModId, key);
+            ModHelper.RemoveModData(BaseModId, KNotesPauseUntilRep);
+            ModHelper.RemoveModData(BaseModId, KNotesPauseDay);
             GiftMode = false;
         }
     }

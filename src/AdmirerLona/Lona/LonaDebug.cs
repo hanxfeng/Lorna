@@ -31,7 +31,8 @@ namespace AdmirerLona
             builder.AddButton("洛娜 · 来买", delegate { Force(LonaVisit.Buy, LonaStory.Daily, -1); });
             builder.AddButton("洛娜 · 来卖", delegate { Force(LonaVisit.Sell, LonaStory.Daily, -1); });
             builder.AddButton("小偷形态（150 前）", ForceThief);
-            builder.AddButton("首次见面（特殊）", delegate { Force(LonaVisit.Story, LonaStory.FirstMeet, -1); });
+            builder.AddButton("初见面·第一段（买食物）", delegate { Force(LonaVisit.FirstPurchase, LonaStory.FirstMeet, -1); });
+            builder.AddButton("初见面·第二段（揭面）", delegate { Force(LonaVisit.Reveal, LonaStory.FirstMeet, -1); });
             builder.End();
 
             builder.AddHeader("日常剧情");

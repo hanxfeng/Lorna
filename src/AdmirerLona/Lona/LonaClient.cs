@@ -8,7 +8,9 @@ namespace AdmirerLona
     {
         Story,
         Buy,
-        Sell
+        Sell,
+        FirstPurchase,
+        Reveal
     }
 
     /// <summary>构造顾客：150 前的「小偷形态」和 150 后的「洛娜形态」。</summary>
@@ -79,21 +81,28 @@ namespace AdmirerLona
             // 举报 = 永久离开（与卖四次芬太片/梦尘相同）
             client.onReportAction = delegate { State.Leave("reported by the player"); };
 
-            if (visit == LonaVisit.Buy)
+            switch (visit)
             {
-                SetupBuyer(client);
-            }
-            else if (visit == LonaVisit.Sell)
-            {
-                SetupSeller(client);
-            }
-            else
-            {
-                client.clientIntent = StoreClient.ClientIntent.DIALOGUE;
+                case LonaVisit.Buy:
+                    SetupBuyer(client);
+                    break;
+                case LonaVisit.Sell:
+                    SetupSeller(client);
+                    break;
+                case LonaVisit.FirstPurchase:
+                    SetupFirstPurchase(client);
+                    break;
+                case LonaVisit.Reveal:
+                    client.clientIntent = StoreClient.ClientIntent.DIALOGUE;
+                    break;
+                default:
+                    client.clientIntent = StoreClient.ClientIntent.DIALOGUE;
+                    break;
             }
 
             BuildDialogue(client, visit, story, dailyTier);
             client.AddBasicDialog();
+            ApplyVisitOverrides(client, visit);
             client.CompleteClientCreation();
             client.sourceModId = "";
             return client;
@@ -114,6 +123,18 @@ namespace AdmirerLona
             client.clientIntent = StoreClient.ClientIntent.SELL;
         }
 
+        /// <summary>第一次见面：只买食物，预算 200。</summary>
+        private static void SetupFirstPurchase(StoreClient client)
+        {
+            client.clientIntent = StoreClient.ClientIntent.BUY;
+            client.clientBuyingTagList.Add("FOOD");
+            client.SetBudget(200);
+            client.willAcceptItem = delegate(GameItem item)
+            {
+                return item != null && item.IsTag("FOOD");
+            };
+        }
+
         /// <summary>收购：日用品/食物/医疗，拒绝麻醉品，但接受奥克西莫注射器。</summary>
         private static bool AcceptsAsBuyer(GameItem item)
         {
@@ -130,6 +151,17 @@ namespace AdmirerLona
         // ---------------------------------------------------------------
         private static void BuildDialogue(StoreClient client, LonaVisit visit, LonaStory story, int dailyTier)
         {
+            if (visit == LonaVisit.FirstPurchase)
+            {
+                BuildStoryLines(client, LonaText.FirstPurchaseLines());
+                return;
+            }
+            if (visit == LonaVisit.Reveal)
+            {
+                BuildRevealDialogue(client);
+                return;
+            }
+
             List<string> lines = new List<string>();
 
             if (visit == LonaVisit.Story)
@@ -179,6 +211,82 @@ namespace AdmirerLona
             {
                 last.SetEndAction(delegate { AddGoods(); });
             }
+        }
+
+        /// <summary>把 (说话人, 文本) 串成对话链；玩家行用 PLAYER 气泡，不显示名字。</summary>
+        private static Dialogue BuildStoryLines(StoreClient client, List<LonaLine> lines)
+        {
+            Dialogue current = client.mainDialogue;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string speaker = lines[i].Player ? "PLAYER" : client.displayName;
+                current.SetText(speaker, lines[i].Text);
+                if (i < lines.Count - 1)
+                {
+                    current = current.NextDialogue();
+                }
+            }
+            return current;
+        }
+
+        /// <summary>揭面：说完第一句后亲手把礼物放到柜台上，最后离开。</summary>
+        private static void BuildRevealDialogue(StoreClient client)
+        {
+            List<LonaLine> lines = LonaText.RevealLines();
+            Dialogue head = client.mainDialogue;
+            head.SetText(client.displayName, lines[0].Text);
+
+            Dialogue last = head;
+            for (int i = 1; i < lines.Count; i++)
+            {
+                last = last.NextDialogue();
+                last.SetText(lines[i].Player ? "PLAYER" : client.displayName, lines[i].Text);
+            }
+
+            if (head.nextDialogue != null)
+            {
+                head.nextDialogue.startAction = GiveRevealGift;
+            }
+            last.SetEndAction(DismissLona);
+        }
+
+        private static void GiveRevealGift()
+        {
+            try
+            {
+                PlayerStore.Instance.AddDirectSellingItemToTable("neuroactive_perfume", true);
+                ModEntry.Log("揭面礼物已放到柜台：neuroactive_perfume");
+            }
+            catch (Exception e)
+            {
+                ModEntry.Log("揭面礼物失败: " + e.Message);
+            }
+        }
+
+        private static void DismissLona()
+        {
+            try
+            {
+                if (PlayerStore.Instance != null)
+                {
+                    PlayerStore.Instance.DismissCurrentClient(false);
+                }
+            }
+            catch (Exception e)
+            {
+                ModEntry.Log("洛娜离场失败: " + e.Message);
+            }
+        }
+
+        /// <summary>第一次见面的收尾台词改成「下次见」，说完离开。</summary>
+        private static void ApplyVisitOverrides(StoreClient client, LonaVisit visit)
+        {
+            if (visit != LonaVisit.FirstPurchase) return;
+
+            Dialogue farewell = new Dialogue();
+            farewell.SetText(client.displayName, LonaText.FirstPurchaseFarewell());
+            farewell.SetEndAction(DismissLona);
+            client.allDoneDialogue = farewell;
         }
 
         // ---------------------------------------------------------------

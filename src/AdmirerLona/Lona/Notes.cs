@@ -6,20 +6,14 @@ namespace AdmirerLona
 {
     /// <summary>
     /// 卖药警告纸条，以及与前置模组（Enhanced_Secret_Admirers_And_More_News）纸条的互斥。
-    /// 互斥实现：直接写前置模组的私有存档键 npc_done_&lt;id&gt;，让它当天的 DeliverPending 跳过。
+    /// 互斥实现：写前置模组的两个私有存档键 notes_pause_until_rep / notes_pause_day，
+    /// 让它在暂停期间不发纸条（需要前置模组支持，见「前置模组修改.txt」）。
     /// </summary>
     internal static class Notes
     {
         private static readonly string[] NarcoticItems =
         {
             "fanta_pill", "dream_dust"
-        };
-
-        // 前置模组 NpcNotes 里的 13 位特殊 NPC，键名必须和它一致。
-        private static readonly string[] BaseNpcIds =
-        {
-            "georgio", "eleanor", "serpico", "lou", "joe", "sawyer", "jackson",
-            "butcher", "bailey", "arthur", "li", "juan", "john"
         };
 
         public static bool IsNarcoticSale(GameItem item)
@@ -90,22 +84,11 @@ namespace AdmirerLona
                 ModEntry.Log("警告纸条生成失败: " + e.Message);
             }
 
-            // 警告纸条出现时，前置模组当天应当发出的特殊 NPC 纸条永久作废。
-            SuppressBaseNpcNotes();
+            // 警告纸条出现后：暂停前置模组的纸条，直到下层区声望 +10。
+            State.PauseBaseNotesUntil(State.Reputation + 10);
 
             ModEntry.Log("警告纸条 #" + index + " 已投放（第 " + State.Today + " 天）");
             State.ClearPendingNote();
-        }
-
-        private static void SuppressBaseNpcNotes()
-        {
-            if (!BaseModSchema.Ok) return;
-
-            foreach (string id in BaseNpcIds)
-            {
-                ModHelper.SetModDataBool(State.BaseModId, "npc_done_" + id, true);
-            }
-            ModEntry.Log("已作废前置模组当天及后续的特殊 NPC 纸条");
         }
     }
 

@@ -75,6 +75,7 @@ namespace AdmirerLona
             {
                 Portrait.EnsureInjected();
                 State.CheckActivation();
+                State.ClearPauseIfReached();
                 Notes.DeliverPending();
                 Gift.Reset();
             }
