@@ -1,0 +1,114 @@
+神秘仰慕者洛娜 · 小偷形态立绘提示词（给 GPT / DALL·E / 图像模型）
+最后更新：2026-11-02
+
+说明：洛娜形态已经有成品（洛娜概念图.png），本文件只负责「声望阈值之前、玩家看到
+显示名为『小偷』」的那张 lona_thief.png。
+
+======================================================================
+〇、生成前先做这一步
+======================================================================
+
+  把 **洛娜概念图.png** 作为参考图一起发给模型，并明确说：
+  "Same character, same pixel-art style, but disguised."
+  两张图必须是同一套像素密度、同一套描边、同一套配色，否则进游戏会明显不像同一个人。
+
+======================================================================
+一、英文提示词（直接复制）
+======================================================================
+
+Pixel-art character portrait for a gritty sci-fi pawnshop game. Single character,
+waist-up, centered, facing the viewer, large head-to-body ratio, clean bold outlines,
+distinct flat color blocks, muted desaturated palette — match the attached reference
+illustration exactly in pixel density, line weight and rendering style.
+
+The same woman as the reference, but disguised: a dark grey hood is pulled up over her
+head and hides her reddish-brown hair and low ponytail completely. Her dark wine-red
+scarf (#7A303D) is pulled up over her nose and mouth. The collar of her worn dark grey
+long coat is turned up. Under the coat only a hint of a pale work-uniform collar is
+visible. Dark gloves, a shoulder strap across the chest.
+
+Her shoulders are broadened by the bulky coat and her chest is flattened, so the
+silhouette is deliberately ambiguous — at a glance she reads as a nondescript
+black-market regular, not as a woman. Only a narrow strip of tired, cold eyes is
+visible in the shadow of the hood.
+
+Flat pixel shading with two or three tones per material, no gradients, no painterly
+texture, subtle cool rim light on one side.
+
+Plain flat mid-grey background (#808080), no scenery, no cast shadow, no frame, no
+border, no text, no watermark, one character only, waist-up composition, centered.
+
+======================================================================
+二、中文对照（不用发给模型，仅供核对）
+======================================================================
+
+  像素画风、半身、居中、头身比偏大、描边清晰、色块分明、低饱和配色——
+  像素密度、描边粗细、上色方式要和参考图完全一致。
+
+  同一个人，但做了伪装：
+  · 深灰色兜帽罩住整个头，暗红棕色头发和低马尾**完全看不见**；
+  · 暗酒红围巾（#7A303D）拉高，遮住鼻子以下；
+  · 深灰长外套的领子立起来；
+  · 外套里面只露一点浅色工作制服的领口；
+  · 深色手套、胸前一条挎包带。
+
+  宽大的外套把肩膀撑宽、胸口压平，轮廓刻意做得中性——
+  一眼看过去就是个黑市里随处可见的普通人，不像女性。
+  兜帽阴影里只露出一条疲惫、冷淡的眼睛。
+
+  平涂像素上色，每种材质两三个色阶，没有渐变、没有厚涂笔触，
+  一侧一点点冷色轮廓光。
+
+  纯中灰背景（#808080），没有场景、没有地面阴影、没有边框、没有文字水印，
+  单人，半身，居中。
+
+======================================================================
+三、必须和洛娜那张对上的锚点
+======================================================================
+
+  画风      像素画；清晰描边；色块分明；低饱和
+  发色      暗红棕色——被兜帽完全遮住，最多允许一两缕碎发，但不许露出马尾
+  围巾      暗酒红 / 酒红色，代表色 #7A303D，拉高遮住口鼻
+  外套      深灰色长外套，领子立起
+  内搭      浅色工作制服领口（只露一点点）
+  手        深色手套
+  挎包      肩带可见（洛娜图里有一条斜挎带）
+  构图      半身、头身比偏大、视线略高于镜头
+  气质      疲惫、冷淡、有戒备心
+
+======================================================================
+四、负面提示词（模型支持的话一起给）
+======================================================================
+
+  ponytail, long hair visible, feminine silhouette, female face, big eyes, makeup,
+  lipstick, smiling, cute, glamorous, fashion model, smooth gradient shading,
+  painterly, anime, cel shading, 3D render, photorealistic, extra limbs, extra fingers,
+  deformed hands, text, watermark, signature, frame, border, background scenery,
+  ground shadow, multiple characters, low resolution, jpeg artifacts
+
+  尤其注意排除 **ponytail / long hair visible / feminine silhouette**——
+  这三样一出来，玩家就提前认出她了。
+
+======================================================================
+五、出图之后
+======================================================================
+
+  1. 抠掉背景，保留透明通道；
+  2. 和洛娜那张**一起**按 288:211 重新取景（人物居中，头身比、头顶留白对齐），
+     ⚠️ 洛娜概念图是 1199×1312 的竖图，游戏里的顾客贴图是 288×211 的横图，
+     两张都要按 288:211 重新摆一遍，否则她进店会比别的顾客高出一截；
+  3. 导出 576×422（2 倍图），存成 lona_thief.png；
+  4. 放到 src\AdmirerLona\Textures\ ，然后 build.bat。
+
+======================================================================
+六、如果模型画出来还是太像女生
+======================================================================
+
+  在提示词里追加：
+
+  "broad shoulders, flat chest, bulky oversized coat, hood casting a hard shadow over
+  the whole face, only eyes visible, no feminine curves, silhouette of an anonymous
+  street criminal"
+
+  或者反过来：把洛娜那张作为参考图，要求 "same character wearing a hood and scarf
+  covering the lower face, seen from the same angle and distance"。

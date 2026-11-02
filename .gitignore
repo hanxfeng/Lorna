@@ -1,0 +1,9 @@
+tools/
+.build/
+.ref/
+.workbuddy/
+docs/probably-stolen-modding/
+上传创意工坊/
+src/AdmirerLona/bin/
+src/AdmirerLona/obj/
+bug文档/

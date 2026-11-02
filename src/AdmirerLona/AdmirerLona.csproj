@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>AdmirerLona</AssemblyName>
+    <RootNamespace>AdmirerLona</RootNamespace>
+    <Nullable>disable</Nullable>
+    <!-- Keep in sync with <ModVersion> in manifest.xml -->
+    <Version>0.2.0</Version>
+    <!-- Where the game is. Override on the command line with: dotnet build -c Release -p:GameDir="D:\path\to\Probably Stolen" -->
+    <GameDir Condition="'$(GameDir)' == ''">E:\SteamLibrary\steamapps\common\Probably Stolen</GameDir>
+    <ManagedDir>$(GameDir)\Probably Stolen_Data\Managed</ManagedDir>
+    <ModInstallDir>$(GameDir)\Mods\$(AssemblyName)</ModInstallDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(ManagedDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Do NOT reference PawnshopMod.dll here.
+       The mod scanner treats a reference to an assembly that is neither shipped by the
+       game nor listed in this mod's <Assemblies> as "unlisted-reference" and refuses to
+       enable the mod. Depend on the other mod through <Prerequisites> in manifest.xml
+       and talk to it at runtime (ModHelper.GetModData("pawnshop_mod", ...), or reflection
+       with the "reflection-external" capability declared). -->
+
+  <!-- Files that ship with the mod besides the DLL: the manifest and the asset folders. -->
+  <ItemGroup>
+    <ModFile Include="manifest.xml;preview.png;Textures\**;Sounds\**;Localization\**;LootTables\**;Books\**" />
+    <None Remove="Textures\**;Sounds\**;Localization\**;LootTables\**;Books\**" />
+  </ItemGroup>
+
+  <!-- After every build, install the mod into <game>\Mods\AdmirerLona\ so the game picks it up.
+       Skip it with:  dotnet build -c Release -p:SkipInstall=true  (e.g. when the game folder is read-only). -->
+  <Target Name="InstallMod" AfterTargets="Build" Condition="'$(SkipInstall)' != 'true'">
+    <MakeDir Directories="$(ModInstallDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModInstallDir)" />
+    <Copy SourceFiles="@(ModFile)" DestinationFiles="@(ModFile->'$(ModInstallDir)\%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('%(ModFile.FullPath)')" />
+    <Message Importance="high" Text="Installed into $(ModInstallDir)" />
+  </Target>
+
+</Project>
