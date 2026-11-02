@@ -16,6 +16,7 @@ namespace AdmirerLona
 
         private static bool injected;
         private static bool loggedInfo;
+        private static float injectedScale = -1f;
 
         public static void EnsureInjected()
         {
@@ -27,11 +28,13 @@ namespace AdmirerLona
                 LogSpriteInfo();
             }
 
-            if (injected) return;
-            injected = true;
+            float scale = State.PortraitScaleValue;
+            if (injected && Mathf.Abs(scale - injectedScale) < 0.001f) return;
 
-            Inject(KeyLona);
-            Inject(KeyThief);
+            Inject(KeyLona, scale);
+            Inject(KeyThief, scale);
+            injected = true;
+            injectedScale = scale;
         }
 
         /// <summary>给调试面板用的一行摘要（不依赖控制台）。</summary>
@@ -140,7 +143,7 @@ namespace AdmirerLona
                    && SpriteDict.Instance.spriteDictionary.ContainsKey(key);
         }
 
-        private static void Inject(string key)
+        private static void Inject(string key, float scale)
         {
             Texture2D texture = GetModTexture(key);
             if (texture == null)
@@ -150,12 +153,15 @@ namespace AdmirerLona
             }
 
             Sprite reference = FindReferenceSprite();
-            Sprite sprite = CreateSprite(texture, reference);
+            Sprite sprite = CreateSprite(texture, reference, scale);
             if (sprite == null) return;
 
             SpriteDict.Instance.spriteDictionary[key] = sprite;
             ModEntry.Log("立绘已注入：" + key + " (" + texture.width + "x" + texture.height +
-                         " ppu=" + sprite.pixelsPerUnit.ToString("0.##") + ")");
+                         " ppu=" + sprite.pixelsPerUnit.ToString("0.##") +
+                         " scale=" + scale.ToString("0.##") +
+                         " 世界=" + (texture.width / sprite.pixelsPerUnit).ToString("0.##") + "x" +
+                         (texture.height / sprite.pixelsPerUnit).ToString("0.##") + ")");
         }
 
         private static Texture2D GetModTexture(string key)
@@ -183,22 +189,28 @@ namespace AdmirerLona
             return fallback;
         }
 
-        private static Sprite CreateSprite(Texture2D texture, Sprite reference)
+        private static Sprite CreateSprite(Texture2D texture, Sprite reference, float scale)
         {
             if (texture == null) return null;
 
-            texture.filterMode = FilterMode.Bilinear;
+            // 原版顾客贴图用的是点采样（filter=Point），这里保持一致，否则会糊。
+            texture.filterMode = FilterMode.Point;
             texture.wrapMode = TextureWrapMode.Clamp;
 
-            float pixelsPerUnit = 100f;
-            Vector2 pivot = new Vector2(0.5f, 0f);
+            if (scale <= 0.05f) scale = 0.05f;
+
+            float pixelsPerUnit = 100f / scale;
+            Vector2 pivot = new Vector2(0.5f, Mathf.Min(1f, 0.5f / scale));
 
             if (reference != null && reference.rect.width > 0f && reference.rect.height > 0f)
             {
-                // 世界尺寸对齐：新图宽度 / 新 PPU == 参考图宽度 / 参考 PPU
-                pixelsPerUnit = reference.pixelsPerUnit * (texture.width / reference.rect.width);
+                // 世界宽度对齐参考图，再按 scale 整体缩放（scale 越小人物越矮）
+                pixelsPerUnit = reference.pixelsPerUnit * (texture.width / reference.rect.width) / scale;
+
+                // 轴心往下压，保证缩小时脚底/底边不会浮起来
+                float pivotY = reference.pivot.y / reference.rect.height;
                 pivot = new Vector2(reference.pivot.x / reference.rect.width,
-                                    reference.pivot.y / reference.rect.height);
+                                    Mathf.Clamp(pivotY / scale, 0f, 0.98f));
             }
 
             return Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), pivot, pixelsPerUnit);

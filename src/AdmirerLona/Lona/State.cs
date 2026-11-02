@@ -16,6 +16,14 @@ namespace AdmirerLona
         /// <summary>首次出现所需的「下层区声望」阈值，玩家可在模组配置里改。</summary>
         public static ConfigEntry<int> UnlockRep;
 
+        /// <summary>立绘缩放：1 = 与画布同尺寸，越小人物越矮。</summary>
+        public static ConfigEntry<float> PortraitScale;
+
+        public static float PortraitScaleValue
+        {
+            get { return PortraitScale != null ? PortraitScale.Value : 0.75f; }
+        }
+
         private const string KActivated = "activated";
         private const string KActivationRep = "activation_rep";
         private const string KAffection = "affection";
@@ -67,6 +75,12 @@ namespace AdmirerLona
                 () => "首次出现声望",
                 min: 0, max: 200,
                 tooltip: () => "下层区声望达到该值的第二天，洛娜第一次出现。");
+
+            PortraitScale = config.Define(
+                "portrait_scale", 0.75f, "Lorna",
+                () => "立绘缩放",
+                min: 0.4f, max: 1.2f,
+                tooltip: () => "1 = 和画布同尺寸；越小人物越矮。改完下次开门生效。");
         }
 
         // ---------------------------------------------------------------
