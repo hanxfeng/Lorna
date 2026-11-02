@@ -124,9 +124,11 @@ namespace AdmirerLona
                 return;
             }
             Rect rect = sprite.rect;
+            string filter = sprite.texture != null ? sprite.texture.filterMode.ToString() : "?";
             ModEntry.Log("  sprite " + key + ": " + rect.width + "x" + rect.height +
                          " ppu=" + sprite.pixelsPerUnit.ToString("0.##") +
                          " pivot=(" + sprite.pivot.x.ToString("0.#") + "," + sprite.pivot.y.ToString("0.#") + ")" +
+                         " filter=" + filter +
                          " 世界尺寸=" + (rect.width / sprite.pixelsPerUnit).ToString("0.##") + "x" +
                          (rect.height / sprite.pixelsPerUnit).ToString("0.##"));
         }
