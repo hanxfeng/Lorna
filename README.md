@@ -113,7 +113,7 @@ F8 控制台过滤 `[神秘仰慕者洛娜]`。前置模组私有键检测失败
 | --- | --- |
 | 所有台词 | `src\AdmirerLona\Lona\LonaText.cs`，带「【…占位】」前缀 |
 | 灯牌 → 货品 | `LonaClient.cs` 里的 6 组 item id 数组，先用现成物品代替 |
-| 立绘 | `Textures\lona.png` / `lona_thief.png` 不存在时自动回退原版立绘；规格见 `立绘需求.txt` |
+| 立绘 | `Textures\lona.png`（576×422）已放入；`lona_thief.png` 还缺，小偷形态会回退原版立绘；规格见 `立绘需求.txt` |
 | 配置文案 | 模组配置面板里只有「首次出现声望」一项 |
 
 ---
