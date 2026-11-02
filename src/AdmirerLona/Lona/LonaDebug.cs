@@ -24,7 +24,7 @@ namespace AdmirerLona
             }
 
             CustomUIBuilder builder = CustomUIManager.Window(WindowId, "洛娜测试", CustomUIManager.LAYER_OVERLAY);
-            builder.SetSize(580f, 470f).SetDraggable(true).SetCloseOnEscape(true);
+            builder.SetSize(580f, 640f).SetDraggable(true).SetCloseOnEscape(true);
 
             builder.AddHeader("出现（下一位顾客，开门时生效）");
             builder.BeginGrid(2, 270f, 40f);
@@ -51,6 +51,15 @@ namespace AdmirerLona
             builder.AddButton("好感 > 80", delegate { Force(LonaVisit.Story, LonaStory.Above80, -1); });
             builder.AddButton("好感 > 90", delegate { Force(LonaVisit.Story, LonaStory.Above90, -1); });
             builder.AddButton("好感 100", delegate { Force(LonaVisit.Story, LonaStory.Reach100, -1); });
+            builder.End();
+
+            builder.AddHeader("警告纸条");
+            builder.BeginGrid(3, 180f, 40f);
+            for (int i = 1; i <= 3; i++)
+            {
+                int index = i;
+                builder.AddButton("警告纸条 #" + i, delegate { ModEntry.Log(Notes.DebugDeliver(index)); });
+            }
             builder.End();
 
             builder.AddHeader("立绘参考");

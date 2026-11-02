@@ -102,8 +102,8 @@ namespace AdmirerLona
 
             BuildDialogue(client, visit, story, dailyTier);
             client.AddBasicDialog();
-            ApplyVisitOverrides(client, visit);
             client.CompleteClientCreation();
+            ApplyVisitOverrides(client, visit);
             client.sourceModId = "";
             return client;
         }
@@ -278,7 +278,11 @@ namespace AdmirerLona
             }
         }
 
-        /// <summary>第一次见面的收尾台词改成「下次见」，说完离开。</summary>
+        /// <summary>
+        /// 第一次见面的收尾台词改成「下次见」，说完离开。
+        /// 买完东西时游戏播的是 acceptDealDialogue（原版是「就这么定了」），
+        /// allDoneDialogue 是"事办完了"时才播的，两个都覆盖掉。
+        /// </summary>
         private static void ApplyVisitOverrides(StoreClient client, LonaVisit visit)
         {
             if (visit != LonaVisit.FirstPurchase) return;
@@ -286,6 +290,9 @@ namespace AdmirerLona
             Dialogue farewell = new Dialogue();
             farewell.SetText(client.displayName, LonaText.FirstPurchaseFarewell());
             farewell.SetEndAction(DismissLona);
+
+            client.acceptDealDialogue = farewell;
+            client.acceptDealDialogueLastLine = null;
             client.allDoneDialogue = farewell;
         }
 

@@ -50,6 +50,23 @@ namespace AdmirerLona
             return false;
         }
 
+        /// <summary>调试用：直接把第 index 张警告纸条放到柜台上（不计数、不触发暂停）。</summary>
+        public static string DebugDeliver(int index)
+        {
+            if (!State.Ready) return "还没有载入存档";
+            try
+            {
+                GameItem note = PreBuiltItemHelper.CreateHandnote(LonaText.DrugNote(index), "", "");
+                if (note == null) return "生成失败";
+                PlayerStore.Instance.AddDirectSellingItemToTable(note, true);
+                return "警告纸条 #" + index + " 已放到柜台";
+            }
+            catch (Exception e)
+            {
+                return "生成失败: " + e.Message;
+            }
+        }
+
         // ---------------------------------------------------------------
         // 纸条投放：每天开门、第一条顾客之前
         // ---------------------------------------------------------------
