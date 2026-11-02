@@ -9,7 +9,6 @@ namespace AdmirerLona
         ThiefForm,
         FirstMeet,
         Daily,
-        Below70,
         Above80,
         Above90,
         Reach100,
@@ -69,13 +68,6 @@ namespace AdmirerLona
         };
 
         // ---------------- 特殊剧情（占位） ----------------
-        public static readonly string[] Below70 =
-        {
-            "【特殊：好感跌破 70】她把东西放下，没有像往常那样先开口。",
-            "【特殊：好感跌破 70】“那些东西，”她说，“我闻得出来。”",
-            "【特殊：好感跌破 70】她没等你解释，转身走了。"
-        };
-
         public static readonly string[] Above80 =
         {
             "【特殊：好感初次 >80】她今天多带了一份东西，说是“顺手”。",
@@ -188,7 +180,6 @@ namespace AdmirerLona
         {
             switch (story)
             {
-                case LonaStory.Below70: return Below70;
                 case LonaStory.Above80: return Above80;
                 case LonaStory.Above90: return Above90;
                 case LonaStory.Reach100: return Reach100;

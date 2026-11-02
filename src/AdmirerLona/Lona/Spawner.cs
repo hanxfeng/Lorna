@@ -104,8 +104,13 @@ namespace AdmirerLona
                 string pending = State.PendingSpecial;
                 if (!string.IsNullOrEmpty(pending))
                 {
-                    LonaStory story = ParseStory(pending);
                     State.PendingSpecial = "";
+                    LonaStory story;
+                    if (!TryParseStory(pending, out story))
+                    {
+                        ModEntry.Log("丢弃无法识别的特殊剧情：" + pending);
+                        return;
+                    }
                     InsertFront(manager, LonaClient.Create(LonaVisit.Story, story));
                     State.MarkVisited();
                     Gift.Reset();
@@ -194,15 +199,25 @@ namespace AdmirerLona
             return false;
         }
 
-        private static LonaStory ParseStory(string raw)
+        /// <summary>只接受「能当剧情播」的枚举值；旧存档里已删掉的（例如 Below70）一律丢弃。</summary>
+        private static bool TryParseStory(string raw, out LonaStory story)
         {
+            story = LonaStory.Auto;
             try
             {
-                return (LonaStory)Enum.Parse(typeof(LonaStory), raw);
+                LonaStory parsed = (LonaStory)Enum.Parse(typeof(LonaStory), raw);
+                if (!Enum.IsDefined(typeof(LonaStory), parsed)) return false;
+                if (parsed == LonaStory.Auto || parsed == LonaStory.Daily || parsed == LonaStory.ThiefForm
+                    || parsed == LonaStory.FirstMeet || parsed == LonaStory.Gift || parsed == LonaStory.GiftRefused)
+                {
+                    return false;
+                }
+                story = parsed;
+                return true;
             }
             catch (Exception)
             {
-                return LonaStory.Below70;
+                return false;
             }
         }
     }

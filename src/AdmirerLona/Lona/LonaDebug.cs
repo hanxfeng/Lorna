@@ -47,7 +47,6 @@ namespace AdmirerLona
 
             builder.AddHeader("特殊剧情");
             builder.BeginGrid(2, 270f, 40f);
-            builder.AddButton("好感 < 70", delegate { Force(LonaVisit.Story, LonaStory.Below70, -1); });
             builder.AddButton("好感 > 80", delegate { Force(LonaVisit.Story, LonaStory.Above80, -1); });
             builder.AddButton("好感 > 90", delegate { Force(LonaVisit.Story, LonaStory.Above90, -1); });
             builder.AddButton("好感 100", delegate { Force(LonaVisit.Story, LonaStory.Reach100, -1); });

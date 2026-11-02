@@ -23,7 +23,6 @@ namespace AdmirerLona
         private const string KFirstSeen = "first_seen";
         private const string KFirstAppearDay = "first_appear_day";
         private const string KPendingSpecial = "pending_special";
-        private const string KBelow70 = "special_below70";
         private const string KAbove80 = "special_above80";
         private const string KAbove90 = "special_above90";
         private const string KReach100 = "special_100";
@@ -34,7 +33,6 @@ namespace AdmirerLona
         private const string KLastVisitDay = "last_visit_day";
         private const string KFirstMetDay = "first_met_day";
         private const string KRevealed = "revealed";
-        private const string KDisappointed = "disappointed";
 
         // 下面两个键写在「前置模组」的 mod data 命名空间里，由前置模组读取。
         public const string KNotesPauseUntilRep = "notes_pause_until_rep";
@@ -257,23 +255,7 @@ namespace AdmirerLona
         {
             if (!Activated) return;
 
-            // 跌破 70：这一场特殊剧情照常播，之后不再触发任何特殊剧情。
-            if (!GetBool(KBelow70) && AffectionInt < 70)
-            {
-                SetBool(KBelow70, true);
-                SetBool(KDisappointed, true);
-
-                string pending = PendingSpecial;
-                if (!string.IsNullOrEmpty(pending) && pending != LonaStory.Below70.ToString())
-                {
-                    PendingSpecial = "";   // 掉到 70 以下，之前排队的“好剧情”作废
-                }
-                PendingSpecial = LonaStory.Below70.ToString();
-                return;
-            }
-
-            if (GetBool(KDisappointed)) return;
-
+            // 注意：「好感跌破 70」这一段特殊剧情已取消，不在这里处理。
             if (!GetBool(KAbove80) && AffectionInt > 80)
             {
                 SetBool(KAbove80, true);
@@ -388,9 +370,9 @@ namespace AdmirerLona
             string[] keys =
             {
                 KActivated, KActivationRep, KAffection, KLeft, KFirstSeen, KFirstAppearDay,
-                KPendingSpecial, KBelow70, KAbove80, KAbove90, KReach100,
+                KPendingSpecial, KAbove80, KAbove90, KReach100,
                 KDrugCount, KLastDrugDay, KPendingNoteDay, KPendingNoteIndex, KLastVisitDay,
-                KFirstMetDay, KRevealed, KDisappointed
+                KFirstMetDay, KRevealed
             };
             foreach (string key in keys) ModHelper.RemoveModData(ModId, key);
             ModHelper.RemoveModData(BaseModId, KNotesPauseUntilRep);
