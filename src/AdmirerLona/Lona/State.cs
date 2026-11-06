@@ -25,6 +25,9 @@ namespace AdmirerLona
         /// <summary>电话预约送货的目标总价值。</summary>
         public static ConfigEntry<int> DeliveryTotalValue;
 
+        /// <summary>播完全部日常剧情后，是否把所有日常剧情重新加入池子轮播。</summary>
+        public static ConfigEntry<bool> ReplayDailyStories;
+
         /// <summary>立绘固定缩放：1 = 与原版顾客同尺寸（世界尺寸 2.88 × 2.11）。</summary>
         public const float FixedPortraitScale = 1f;
 
@@ -52,6 +55,11 @@ namespace AdmirerLona
         public static int DeliveryTotalValueValue
         {
             get { return DeliveryTotalValue != null ? Mathf.Max(1000, DeliveryTotalValue.Value) : 1500; }
+        }
+
+        public static bool ReplayDailyStoriesValue
+        {
+            get { return ReplayDailyStories == null || ReplayDailyStories.Value; }
         }
 
         private const string KActivated = "activated";
@@ -136,6 +144,11 @@ namespace AdmirerLona
                 "delivery_total_value", 1500, "Lorna",
                 () => "洛娜送货总价值上限",
                 tooltip: () => "先抽好感对应的件数；若总价值超过该上限，则保留价值最高且不超过上限的组合（默认 1500，最低 1000，不设上限）。");
+
+            ReplayDailyStories = config.Define(
+                "replay_daily_stories", true, "Lorna",
+                () => "轮播日常剧情",
+                tooltip: () => "勾选：所有日常剧情播完后，把所有日常剧情重新加入池子继续随机抽取。不勾选：播完后不再出现日常剧情，洛娜之后只进行常规买卖。");
         }
 
         // ---------------------------------------------------------------

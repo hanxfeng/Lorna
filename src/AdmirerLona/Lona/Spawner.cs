@@ -219,8 +219,9 @@ namespace AdmirerLona
 
         private static int PickDailyStory()
         {
+            bool replay = State.ReplayDailyStoriesValue;
             List<int> candidates = new List<int>();
-            if (State.DailyPoolAll)
+            if (State.DailyPoolAll && replay)
             {
                 for (int id = 1; id <= 35; id++)
                 {
@@ -242,7 +243,7 @@ namespace AdmirerLona
                     if (!State.DailyStorySeen(id)) candidates.Add(id);
                 }
 
-                if (candidates.Count == 0 && affection >= 100)
+                if (candidates.Count == 0 && affection >= 100 && replay)
                 {
                     State.EnableDailyPoolAll();
                     for (int id = 1; id <= 35; id++)
@@ -255,7 +256,7 @@ namespace AdmirerLona
             if (candidates.Count == 0) return 0;
             int picked = candidates[RNG.GetRandomInt(0, candidates.Count - 1)];
             State.MarkDailyStorySeen(picked);
-            if (State.All100DailySeen()) State.EnableDailyPoolAll();
+            if (State.All100DailySeen() && replay) State.EnableDailyPoolAll();
             return picked;
         }
 
