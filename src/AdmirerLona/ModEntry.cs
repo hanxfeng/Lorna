@@ -34,7 +34,9 @@ namespace AdmirerLona
             ModHook.OnGameLoadedInit += OnRunLoaded;
             ModHook.OnShutterOpenedEarly += OnShutterOpened;
             ModHook.OnGenerateCustomerVeryLate += Spawner.OnGenerate;
+            ModHook.OnModItemDirectoryInit += LonaCard.Register;
 
+            Phone.EnsureRegistered();
             LonaDebug.Register();
             ModHelper.AddDebugFunction(Manifest.ID, ModHelper.DEBUG_CATEGORY_COMMAND,
                 "AdmirerLona: Self Test", SelfTest);
@@ -47,8 +49,10 @@ namespace AdmirerLona
             ModHook.OnGameLoadedInit -= OnRunLoaded;
             ModHook.OnShutterOpenedEarly -= OnShutterOpened;
             ModHook.OnGenerateCustomerVeryLate -= Spawner.OnGenerate;
+            ModHook.OnModItemDirectoryInit -= LonaCard.Register;
 
             ModHelper.RemoveDebugFunctions(Manifest.ID);
+            Phone.Unregister();
             Logger.Log("Disabled.");
         }
 
@@ -61,6 +65,8 @@ namespace AdmirerLona
                 BaseModSchema.Check();
                 Portrait.EnsureInjected();
                 State.OnRunLoaded();
+                Phone.EnsureRegistered();
+                Phone.EnsureContact();
             }
             catch (Exception e)
             {
@@ -74,10 +80,12 @@ namespace AdmirerLona
             try
             {
                 Portrait.EnsureInjected();
+                State.TrackUpperTier();
                 State.CheckActivation();
                 State.ClearPauseIfReached();
                 Notes.DeliverPending();
                 Gift.Reset();
+                Phone.EnsureContact();
             }
             catch (Exception e)
             {

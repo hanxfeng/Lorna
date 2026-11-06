@@ -28,6 +28,8 @@ OUT_CSV = os.path.join(OUT_DIR, "zh.csv")
 FILES = [
     "lona_notes_zh.md",
     "lona_first_zh.md",
+    "lona_story_zh.md",
+    "lona_phone_zh.md",
 ]
 
 KEY_RE = re.compile(r"^##\s+([A-Za-z0-9_]+)\s*$")

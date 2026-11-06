@@ -12,12 +12,14 @@ namespace AdmirerLona
         public static LonaVisit Visit = LonaVisit.Buy;
         public static LonaStory Story = LonaStory.Daily;
         public static int DailyTier = -1;
+        public static int DailyStory;
 
         public static void Clear()
         {
             Pending = false;
             Thief = false;
             DailyTier = -1;
+            DailyStory = 0;
             Visit = LonaVisit.Buy;
             Story = LonaStory.Daily;
         }
@@ -61,13 +63,59 @@ namespace AdmirerLona
 
                 State.CheckActivation();
 
-                // ---- 150 声望之前：10% 顶替小偷，只换立绘 ----
+                if (State.PendingTierDay >= 0 || State.PendingDeliveryDay >= 0)
+                {
+                    ModEntry.Log("待处理：today=" + State.Today
+                        + " tier=" + State.PendingTierStory + "@" + State.PendingTierDay
+                        + " delivery=" + State.PendingDeliveryCategory + "@" + State.PendingDeliveryDay);
+                }
+
+                // ---- 上层区声望档位提升：第二天队首，纯剧情 ----
+                bool tierStoryQueued = false;
+                if (State.PendingTierDay >= 0 && State.Today >= State.PendingTierDay)
+                {
+                    LonaStory tierStory = (LonaStory)State.PendingTierStory;
+                    State.ClearTierStory();
+                    if (tierStory == LonaStory.Upper70 || tierStory == LonaStory.Upper140)
+                    {
+                        InsertFront(manager, LonaClient.Create(LonaVisit.Story, tierStory));
+                        State.MarkVisited();
+                        Gift.Reset();
+                        tierStoryQueued = true;
+                        ModEntry.Log("档位剧情：" + tierStory + "（队首）");
+                    }
+                }
+
+                // ---- 电话预约送货：第二天队尾，正常交易（100 好感免费） ----
+                if (State.PendingDeliveryDay >= 0 && State.Today >= State.PendingDeliveryDay)
+                {
+                    string category = State.PendingDeliveryCategory;
+                    int count = State.PendingDeliveryCount;
+                    bool free = State.PendingDeliveryFree;
+                    int tier = State.PendingDeliveryTier;
+                    State.ClearDelivery();
+
+                    if (string.IsNullOrEmpty(category) || count <= 0)
+                    {
+                        ModEntry.Log("电话送货数据不完整，已跳过");
+                        return;
+                    }
+
+                    List<GameItem> items = Delivery.Build(category, tier, count, State.DeliveryTotalValueValue);
+                    StoreClient delivery = LonaClient.CreateDelivery(items, free);
+                    manager.AddClient(delivery);
+                    State.MarkVisited();
+                    Gift.Reset();
+                    ModEntry.Log("电话送货到店：" + category + " x" + items.Count + (free ? "（免费）" : ""));
+                    return;
+                }
+
+                if (tierStoryQueued) return;
+
+                // ---- 150 声望之前：小偷/扒手/食物窃贼有 10% 概率换成她的立绘 ----
                 if (!State.Activated)
                 {
-                    if (RNG.Roll(ThiefReplaceChance))
-                    {
-                        ReplaceFirstThief(manager, LonaClient.CreateThiefForm());
-                    }
+                    TryReplaceThiefSprite(manager);
                     return;
                 }
 
@@ -100,6 +148,17 @@ namespace AdmirerLona
                     return;
                 }
 
+                // ---- 揭面后第二天：队首正式自我介绍 ----
+                if (State.PostRevealDay >= 0 && State.Today >= State.PostRevealDay)
+                {
+                    State.ClearPostReveal();
+                    InsertFront(manager, LonaClient.Create(LonaVisit.Story, LonaStory.PostReveal));
+                    State.MarkVisited();
+                    Gift.Reset();
+                    ModEntry.Log("揭面后介绍（队首）");
+                    return;
+                }
+
                 // ---- 待播的特殊剧情 ----
                 string pending = State.PendingSpecial;
                 if (!string.IsNullOrEmpty(pending))
@@ -111,17 +170,36 @@ namespace AdmirerLona
                         ModEntry.Log("丢弃无法识别的特殊剧情：" + pending);
                         return;
                     }
-                    InsertFront(manager, LonaClient.Create(LonaVisit.Story, story));
+                    StoreClient special = LonaClient.Create(LonaVisit.Story, story);
+                    if (story == LonaStory.Reach100) InsertFront(manager, special);
+                    else manager.AddClient(special);
                     State.MarkVisited();
                     Gift.Reset();
-                    ModEntry.Log("特殊剧情：" + story);
+                    ModEntry.Log("特殊剧情：" + story + (story == LonaStory.Reach100 ? "（队首）" : "（队尾）"));
                     return;
                 }
 
-                // ---- 日常到访 ----
+                // ---- 日常到访：50% 剧情，50% 普通买卖 ----
                 if (HasLona(manager.clientStack)) return;
                 if (State.Today - State.LastVisitDay < CooldownDays) return;
                 if (!RNG.Roll(AppearChance)) return;
+
+                if (RNG.Roll(50))
+                {
+                    int storyId = PickDailyStory();
+                    if (storyId > 0)
+                    {
+                        bool trade = LonaText.DailyStoryTrades(storyId);
+                        LonaVisit storyVisit = trade ? LonaVisit.StoryBuy : LonaVisit.Story;
+                        StoreClient storyClient = LonaClient.Create(storyVisit, LonaStory.Daily, -1, storyId);
+                        if (LonaText.DailyStoryQueueHead(storyId)) InsertFront(manager, storyClient);
+                        else if (!ReplaceFirstThief(manager, storyClient)) manager.AddClient(storyClient);
+                        State.MarkVisited();
+                        Gift.Reset();
+                        ModEntry.Log("日常剧情：" + storyId + (trade ? "（购买）" : "") + (LonaText.DailyStoryQueueHead(storyId) ? "（队首）" : "（队尾）"));
+                        return;
+                    }
+                }
 
                 LonaVisit visit = RNG.Roll(50) ? LonaVisit.Buy : LonaVisit.Sell;
                 StoreClient client = LonaClient.Create(visit, LonaStory.Daily);
@@ -139,6 +217,48 @@ namespace AdmirerLona
             }
         }
 
+        private static int PickDailyStory()
+        {
+            List<int> candidates = new List<int>();
+            if (State.DailyPoolAll)
+            {
+                for (int id = 1; id <= 35; id++)
+                {
+                    if (id != 30) candidates.Add(id);
+                }
+            }
+            else
+            {
+                int from;
+                int to;
+                int affection = State.AffectionInt;
+                if (affection < 80) { from = 1; to = 10; }
+                else if (affection < 90) { from = 11; to = 20; }
+                else if (affection < 100) { from = 21; to = 29; }
+                else { from = 31; to = 35; }
+
+                for (int id = from; id <= to; id++)
+                {
+                    if (!State.DailyStorySeen(id)) candidates.Add(id);
+                }
+
+                if (candidates.Count == 0 && affection >= 100)
+                {
+                    State.EnableDailyPoolAll();
+                    for (int id = 1; id <= 35; id++)
+                    {
+                        if (id != 30) candidates.Add(id);
+                    }
+                }
+            }
+
+            if (candidates.Count == 0) return 0;
+            int picked = candidates[RNG.GetRandomInt(0, candidates.Count - 1)];
+            State.MarkDailyStorySeen(picked);
+            if (State.All100DailySeen()) State.EnableDailyPoolAll();
+            return picked;
+        }
+
         private static void ApplyDebug(StoreClientManager manager)
         {
             StoreClient client;
@@ -149,7 +269,7 @@ namespace AdmirerLona
             }
             else
             {
-                client = LonaClient.Create(DebugForce.Visit, DebugForce.Story, DebugForce.DailyTier);
+                client = LonaClient.Create(DebugForce.Visit, DebugForce.Story, DebugForce.DailyTier, DebugForce.DailyStory);
                 ModEntry.Log("调试：剧情 " + DebugForce.Story + " / 到访 " + DebugForce.Visit + " 已排队");
             }
             InsertFront(manager, client);
@@ -187,6 +307,44 @@ namespace AdmirerLona
                 if (identifier == ThiefIds[i]) return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// 150 声望之前：把队列里第一个小偷/扒手/食物窃贼的立绘换成洛娜。
+        /// 只改 spriteName —— identifier、displayName、对话、批发折扣和上货表全部保持原样，
+        /// 所以行为和原来那一种小偷完全一致，也不会写任何状态或触发剧情。
+        /// </summary>
+        private static void TryReplaceThiefSprite(StoreClientManager manager)
+        {
+            if (manager == null || manager.clientStack == null) return;
+
+            StoreClient thief = FindFirstThief(manager.clientStack);
+            if (thief == null) return;
+
+            if (!RNG.Roll(ThiefReplaceChance)) return;
+
+            if (!Portrait.Has(Portrait.KeyThief))
+            {
+                ModEntry.Log("窃贼洛娜：lona_thief 贴图未加载，保持原版立绘");
+                return;
+            }
+
+            thief.spriteName = Portrait.KeyThief;
+            ModEntry.Log("顶替小偷：" + thief.identifier + "（只换立绘，名字/行为保持原版）");
+        }
+
+        private static StoreClient FindFirstThief(List<StoreClient> stack)
+        {
+            if (stack == null) return null;
+            for (int i = 0; i < stack.Count; i++)
+            {
+                StoreClient client = stack[i];
+                if (client != null && client.identifier != null && IsThief(client.identifier))
+                {
+                    return client;
+                }
+            }
+            return null;
         }
 
         private static bool HasLona(List<StoreClient> stack)

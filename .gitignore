@@ -7,3 +7,5 @@ docs/probably-stolen-modding/
 src/AdmirerLona/bin/
 src/AdmirerLona/obj/
 bug文档/
+.venv/
+pipz/

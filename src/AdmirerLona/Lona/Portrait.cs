@@ -28,13 +28,24 @@ namespace AdmirerLona
                 LogSpriteInfo();
             }
 
+            Dictionary<string, Sprite> dict = SpriteDict.Instance.spriteDictionary;
             float scale = State.PortraitScaleValue;
-            if (injected && Mathf.Abs(scale - injectedScale) < 0.001f) return;
+            bool keysPresent = dict.ContainsKey(KeyLona) && dict.ContainsKey(KeyThief);
+            if (injected && keysPresent && Mathf.Abs(scale - injectedScale) < 0.001f) return;
 
+            if (injected && !keysPresent)
+            {
+                ModEntry.Log("SpriteDict 已重建，重新注入洛娜立绘");
+            }
+
+            // 场景/读档可能重建 SpriteDict 并清空字典，所以这里不能只信 injected 标记，
+            // 每次都要确认两个 key 还在，不在就重新注入。
             Inject(KeyLona, scale);
             Inject(KeyThief, scale);
-            injected = true;
+            injected = dict.ContainsKey(KeyLona) && dict.ContainsKey(KeyThief);
             injectedScale = scale;
+            ModEntry.Log("立绘注入状态：" + KeyLona + "=" + dict.ContainsKey(KeyLona)
+                         + " " + KeyThief + "=" + dict.ContainsKey(KeyThief));
         }
 
         /// <summary>给调试面板用的一行摘要（不依赖控制台）。</summary>
@@ -141,6 +152,16 @@ namespace AdmirerLona
             return SpriteDict.Instance != null
                    && SpriteDict.Instance.spriteDictionary != null
                    && SpriteDict.Instance.spriteDictionary.ContainsKey(key);
+        }
+
+        /// <summary>调试用：清掉注入标记，强制按当前 SpriteDict 重新注入两张立绘。</summary>
+        public static void ForceReinject()
+        {
+            injected = false;
+            injectedScale = -1f;
+            EnsureInjected();
+            ModEntry.Log("立绘强制重注入：" + KeyLona + "=" + Has(KeyLona)
+                         + " " + KeyThief + "=" + Has(KeyThief));
         }
 
         private static void Inject(string key, float scale)

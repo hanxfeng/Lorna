@@ -1,4 +1,7 @@
 using System;
+using System.Collections;
+using System.Reflection;
+using HarmonyLib;
 using UnityEngine;
 
 namespace AdmirerLona
@@ -14,14 +17,26 @@ namespace AdmirerLona
         private static Func<GameItem, bool> previousAccept;
         private static int cashBefore;
 
+        private static string[] pendingLines;
+        private static bool messageScheduled;
+
+        // 必须保存 StoreClient 的原始 preference 字段，不能保存 willAcceptItem 的 getter：
+        // getter 返回的是一个会再次读取 willAcceptItemPreference 的包装委托，
+        // 把它写回 preference 会让委托调用自己，Disarm 之后下一次询问直接无限递归。
+        private static readonly FieldInfo AcceptPreferenceField =
+            AccessTools.Field(typeof(StoreClient), "willAcceptItemPreference");
+
         public static void Arm(StoreClient client)
         {
             if (client == null) return;
             Disarm();
 
             armed = client;
-            previousAccept = client.willAcceptItem;
-            client.willAcceptItem = delegate { return true; };
+            previousAccept = AcceptPreferenceField != null
+                ? AcceptPreferenceField.GetValue(client) as Func<GameItem, bool>
+                : null;
+            // 不能无条件 true：游戏在部分路径会拿 null 来问，返回 true 会把 null 带进交易逻辑。
+            client.willAcceptItem = delegate(GameItem item) { return item != null; };
 
             State.GiftMode = true;
             ModEntry.Log("送礼状态开启（好感 " + State.AffectionInt + "）");
@@ -29,7 +44,7 @@ namespace AdmirerLona
 
         public static void Disarm()
         {
-            if (armed != null && previousAccept != null)
+            if (armed != null && AcceptPreferenceField != null)
             {
                 try { armed.willAcceptItem = previousAccept; }
                 catch (Exception) { }
@@ -50,18 +65,24 @@ namespace AdmirerLona
             return armed != null && CurrentClient() == armed;
         }
 
+        /// <summary>当前是否正处在给洛娜送礼的状态。</summary>
+        public static bool IsArmedForCurrentClient()
+        {
+            return State.GiftMode && IsGiftClient();
+        }
+
         public static bool ShouldBlock(GameItem item)
         {
             if (!State.GiftMode || !IsGiftClient() || item == null) return false;
 
-            if (IsNarcotic(item))
+            if (IsNarcotic(item) || ContrabandHelper.IsContraband(item))
             {
-                Say(LonaText.GiftRefusedNarcotic);
+                QueueLines(LonaText.GiftRefusedForbidden);
                 return true;
             }
             if (State.AffectionInt < 80 && ValueOf(item) > 300)
             {
-                Say(LonaText.GiftRefusedTooExpensive);
+                QueueLines(LonaText.GiftRefusedTooExpensive);
                 return true;
             }
             return false;
@@ -91,8 +112,10 @@ namespace AdmirerLona
             State.AddAffection(gain);
 
             ModEntry.Log("收到礼物：" + item.identifier + " 价值 " + value + "，好感 +" + gain.ToString("0.##"));
-            Say(LonaText.GiftThanks);
+
+            // 先退出送礼状态，再排队播感谢；不能在 SellItem 的调用栈里直接 StartDialogue。
             Disarm();
+            QueueLines(LonaText.GiftThanks);
         }
 
         public static void Reset()
@@ -102,24 +125,74 @@ namespace AdmirerLona
 
         private static bool IsNarcotic(GameItem item)
         {
-            if (!item.IsTag("NARCOTIC")) return false;
-            return item.identifier != "pink_injector";
+            return item.IsTag("NARCOTIC");
         }
 
         private static int ValueOf(GameItem item)
         {
             long value = item.unitValue;
             if (value > 0) return (int)value;
-            return (int)item.GetNegociatedValue();
-        }
-
-        private static void Say(string text)
-        {
             try
             {
-                Dialogue dialogue = new Dialogue();
-                dialogue.SetText(LonaText.DisplayName, text);
-                if (DialogUIManager.Instance != null) DialogUIManager.Instance.StartDialogue(dialogue);
+                return (int)item.GetNegociatedValue();
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// 不在 SellItem 的 Prefix/Postfix 里直接开对话：SellMultiple 会在一帧内连续卖多件，
+        /// 同步 StartDialogue 会嵌套执行当前对话的 endAction，导致递归/卡死。
+        /// 这里只记下一条消息，等这一帧的卖货调用栈结束再显示。
+        /// </summary>
+        private static void QueueLines(params string[] lines)
+        {
+            pendingLines = lines;
+            if (messageScheduled) return;
+            if (DialogUIManager.Instance == null) return;
+
+            messageScheduled = true;
+            try
+            {
+                DialogUIManager.Instance.StartCoroutine(ShowMessageNextFrame());
+            }
+            catch (Exception e)
+            {
+                messageScheduled = false;
+                ModEntry.Log("送礼对话排队失败: " + e.Message);
+            }
+        }
+
+        private static IEnumerator ShowMessageNextFrame()
+        {
+            yield return null;
+
+            // 等当前对话链播完再插话，避免在卖货/成交对话的 endAction 里嵌套开新对话。
+            if (DialogUIManager.Instance != null)
+            {
+                for (int i = 0; i < 600 && DialogUIManager.Instance.currentDialog != null; i++)
+                {
+                    yield return null;
+                }
+            }
+
+            messageScheduled = false;
+            string[] lines = pendingLines;
+            pendingLines = null;
+            if (lines == null || lines.Length == 0 || DialogUIManager.Instance == null) yield break;
+
+            try
+            {
+                Dialogue head = new Dialogue();
+                Dialogue current = head;
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    current.SetText(LonaText.DisplayName, lines[i]);
+                    if (i < lines.Length - 1) current = current.NextDialogue();
+                }
+                DialogUIManager.Instance.StartDialogue(head);
             }
             catch (Exception e)
             {

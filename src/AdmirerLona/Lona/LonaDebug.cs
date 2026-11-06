@@ -9,6 +9,7 @@ namespace AdmirerLona
     internal static class LonaDebug
     {
         private const string WindowId = "admirer_lona.debug";
+        private const string StoryWindowId = "admirer_lona.story_debug";
 
         public static void Register()
         {
@@ -24,7 +25,7 @@ namespace AdmirerLona
             }
 
             CustomUIBuilder builder = CustomUIManager.Window(WindowId, "洛娜测试", CustomUIManager.LAYER_OVERLAY);
-            builder.SetSize(580f, 640f).SetDraggable(true).SetCloseOnEscape(true);
+            builder.SetSize(580f, 760f).SetDraggable(true).SetCloseOnEscape(true);
 
             builder.AddHeader("出现（下一位顾客，开门时生效）");
             builder.BeginGrid(2, 270f, 40f);
@@ -35,14 +36,9 @@ namespace AdmirerLona
             builder.AddButton("初见面·第二段（揭面）", delegate { Force(LonaVisit.Reveal, LonaStory.FirstMeet, -1); });
             builder.End();
 
-            builder.AddHeader("日常剧情");
-            builder.BeginGrid(4, 130f, 40f);
-            for (int i = 0; i < 4; i++)
-            {
-                int tier = i;
-                builder.AddButton("档 " + (i + 1) + "（" + TierLabel(i) + "）",
-                    delegate { Force(LonaVisit.Buy, LonaStory.Daily, tier); });
-            }
+            builder.AddHeader("剧情测试");
+            builder.BeginRow(6f);
+            builder.AddButton("剧情列表（全部）", OpenStoryList);
             builder.End();
 
             builder.AddHeader("特殊剧情");
@@ -64,10 +60,16 @@ namespace AdmirerLona
             builder.AddHeader("立绘参考");
             builder.AddLabel(Portrait.DescribeReference());
 
+            builder.AddHeader("电话与送货");
+            builder.BeginRow(6f);
+            builder.AddButton("电话/送货测试面板", OpenPhoneTest);
+            builder.End();
+
             builder.AddHeader("状态");
             builder.BeginRow(6f);
             builder.AddButton("打印状态到 F8", PrintState);
             builder.AddButton("打印立绘尺寸", Portrait.LogSpriteInfo);
+            builder.AddButton("强制重注入立绘", Portrait.ForceReinject);
             builder.AddButton("重置洛娜状态", ResetState);
             builder.AddButton("关闭", delegate { CustomUIManager.Instance.CloseWindow(WindowId); });
             builder.End();
@@ -75,25 +77,59 @@ namespace AdmirerLona
             builder.Show();
         }
 
-        private static string TierLabel(int tier)
-        {
-            switch (tier)
-            {
-                case 0: return "70-79";
-                case 1: return "80-89";
-                case 2: return "90-99";
-                default: return "100";
-            }
-        }
-
-        private static void Force(LonaVisit visit, LonaStory story, int tier)
+        private static void Force(LonaVisit visit, LonaStory story, int tier, int dailyStory = 0)
         {
             DebugForce.Pending = true;
             DebugForce.Thief = false;
             DebugForce.Visit = visit;
             DebugForce.Story = story;
             DebugForce.DailyTier = tier;
-            ModEntry.Log("已排队：下一位顾客是洛娜（" + story + " / " + visit + (tier >= 0 ? " / 档 " + tier : "") + "），开门时生效");
+            DebugForce.DailyStory = dailyStory;
+            ModEntry.Log("已排队：下一位顾客是洛娜（" + story + (dailyStory > 0 ? " / 日常 " + dailyStory : "")
+                + " / " + visit + (tier >= 0 ? " / 档 " + tier : "") + "），开门时生效");
+        }
+
+        private static void ForceDaily(int storyId)
+        {
+            LonaVisit visit = LonaText.DailyStoryTrades(storyId) ? LonaVisit.StoryBuy : LonaVisit.Story;
+            Force(visit, LonaStory.Daily, -1, storyId);
+        }
+
+        private static void OpenStoryList()
+        {
+            if (CustomUIManager.Instance == null)
+            {
+                ModEntry.Log("自定义 UI 还没准备好");
+                return;
+            }
+
+            CustomUIBuilder builder = CustomUIManager.Window(StoryWindowId, "洛娜剧情列表", CustomUIManager.LAYER_OVERLAY);
+            builder.SetSize(900f, 860f).SetDraggable(true).SetCloseOnEscape(true);
+
+            builder.AddHeader("日常剧情 1–35（下一位顾客，开门时生效）");
+            builder.BeginGrid(5, 168f, 38f);
+            for (int id = 1; id <= 35; id++)
+            {
+                if (id == 30) continue;
+                int captured = id;
+                builder.AddButton("日常 " + id.ToString("00"), delegate { ForceDaily(captured); });
+            }
+            builder.End();
+
+            builder.AddHeader("特殊剧情");
+            builder.BeginGrid(3, 280f, 38f);
+            builder.AddButton("初见面·第一段", delegate { Force(LonaVisit.FirstPurchase, LonaStory.FirstMeet, -1); });
+            builder.AddButton("初见面·第二段（揭面）", delegate { Force(LonaVisit.Reveal, LonaStory.FirstMeet, -1); });
+            builder.AddButton("揭面后介绍（队首）", delegate { Force(LonaVisit.Story, LonaStory.PostReveal, -1); });
+            builder.AddButton("好感 >80", delegate { Force(LonaVisit.Story, LonaStory.Above80, -1); });
+            builder.AddButton("好感 >90", delegate { Force(LonaVisit.Story, LonaStory.Above90, -1); });
+            builder.AddButton("好感 100 告白", delegate { Force(LonaVisit.Story, LonaStory.Reach100, -1); });
+            builder.AddButton("上层区 70", delegate { Force(LonaVisit.Story, LonaStory.Upper70, -1); });
+            builder.AddButton("上层区 140", delegate { Force(LonaVisit.Story, LonaStory.Upper140, -1); });
+            builder.AddButton("关闭", delegate { CustomUIManager.Instance.CloseWindow(StoryWindowId); });
+            builder.End();
+
+            builder.Show();
         }
 
         private static void ForceThief()
@@ -119,6 +155,59 @@ namespace AdmirerLona
             State.ResetAll();
             DebugForce.Clear();
             ModEntry.Log("洛娜状态已重置（声望/天赋不变）");
+        }
+
+        private const string PhoneWindowId = "admirer_lona.phone_debug";
+
+        private static void OpenPhoneTest()
+        {
+            if (CustomUIManager.Instance == null)
+            {
+                ModEntry.Log("自定义 UI 还没准备好");
+                return;
+            }
+
+            CustomUIBuilder builder = CustomUIManager.Window(PhoneWindowId, "洛娜电话/送货", CustomUIManager.LAYER_OVERLAY);
+            builder.SetSize(620f, 720f).SetDraggable(true).SetCloseOnEscape(true);
+
+            builder.AddHeader("电话（203169）");
+            builder.BeginGrid(3, 190f, 40f);
+            builder.AddButton("拨打电话", Phone.DebugCall);
+            builder.AddButton("清除冷却", Phone.DebugClearCooldown);
+            builder.AddButton("补联系人", Phone.DebugAddContact);
+            builder.AddButton("给洛娜名片", Phone.DebugGiveCard);
+            builder.AddButton("移除联系人", Phone.RemoveContact);
+            builder.AddButton("打印电话状态", Phone.DebugLogState);
+            builder.End();
+
+            builder.AddHeader("基础送货（下次开门，队尾）");
+            builder.BeginGrid(3, 190f, 40f);
+            foreach (LonaDeliveryCategory category in Delivery.BaseCategories())
+            {
+                LonaDeliveryCategory captured = category;
+                builder.AddButton(captured.Name, delegate { Phone.DebugQueue(captured.Id); });
+            }
+            builder.End();
+
+            builder.AddHeader("特殊送货（下次开门，队尾）");
+            builder.BeginGrid(3, 190f, 40f);
+            foreach (LonaDeliveryCategory category in Delivery.All)
+            {
+                if (!category.Special) continue;
+                LonaDeliveryCategory captured = category;
+                string label = captured.Name + (captured.Unlocked ? "" : "（未解锁）");
+                builder.AddButton(label, delegate { Phone.DebugQueue(captured.Id); });
+            }
+            builder.End();
+
+            builder.AddHeader("档位剧情（下次开门，队首）");
+            builder.BeginGrid(3, 190f, 40f);
+            builder.AddButton("上层区 70", delegate { Phone.DebugTierStory(LonaStory.Upper70); });
+            builder.AddButton("上层区 140", delegate { Phone.DebugTierStory(LonaStory.Upper140); });
+            builder.AddButton("关闭", delegate { CustomUIManager.Instance.CloseWindow(PhoneWindowId); });
+            builder.End();
+
+            builder.Show();
         }
     }
 }
