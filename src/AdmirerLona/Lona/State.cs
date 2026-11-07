@@ -479,6 +479,14 @@ namespace AdmirerLona
             CheckActivation();
             if (Activated && AffectionInt >= 60) StopBaseNotes();
 
+            // 兼容上一版：揭面时曾把前置纸条永久暂停（int.MaxValue）。
+            // 新版改为好感 60 才停，未达到 60 的旧存档要恢复前置纸条。
+            if (!BaseNotesStopped
+                && ModHelper.GetModDataInt(BaseModId, KNotesPauseUntilRep, int.MinValue) == int.MaxValue)
+            {
+                ModHelper.RemoveModData(BaseModId, KNotesPauseUntilRep);
+            }
+
             // 老存档迁移：已经见过面但没有记录见面日，就从今天算起。
             if (Activated && FirstSeen && FirstMetDay < 0)
             {
