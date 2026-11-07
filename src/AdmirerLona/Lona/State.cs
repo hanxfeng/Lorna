@@ -39,7 +39,7 @@ namespace AdmirerLona
         /// <summary>首次出现声望阈值（0–200）。</summary>
         public static int UnlockRepValue
         {
-            get { return UnlockRep != null ? Mathf.Clamp(UnlockRep.Value, 0, 200) : 150; }
+            get { return UnlockRep != null ? Mathf.Clamp(UnlockRep.Value, 0, 200) : 70; }
         }
 
         public static int NormalDeliveryDaysValue
@@ -83,6 +83,7 @@ namespace AdmirerLona
         private const string KSeenDailyLow = "seen_daily_low";
         private const string KSeenDailyHigh = "seen_daily_high";
         private const string KDailyPoolAll = "daily_pool_all";
+        private const string KBaseNotesStopped = "base_notes_stopped";
 
         // 电话预约送货 / 上层区声望档位剧情
         private const string KPendingDeliveryDay = "pending_delivery_day";
@@ -126,9 +127,9 @@ namespace AdmirerLona
             ModConfig config = ModHelper.GetConfig(modId);
             // 不带 min/max：配置面板里是数字输入框，不是滑条。
             UnlockRep = config.Define(
-                "unlock_rep", 150, "Lorna",
+                "unlock_rep", 70, "Lorna",
                 () => "首次出现声望",
-                tooltip: () => "下层区声望达到该值的第二天，洛娜第一次出现（0–200）。");
+                tooltip: () => "下层区声望达到该值的第二天，洛娜第一次出现（默认 70，0–200）。初始好感为当时声望的一半。");
 
             DeliveryDaysNormal = config.Define(
                 "delivery_days_normal", 3, "Lorna",
@@ -188,6 +189,11 @@ namespace AdmirerLona
         public static int AffectionInt
         {
             get { return (int)Affection; }
+        }
+
+        public static bool BaseNotesStopped
+        {
+            get { return GetBool(KBaseNotesStopped); }
         }
 
         public static string PendingSpecial
@@ -367,8 +373,6 @@ namespace AdmirerLona
         {
             SetBool(KRevealed, true);
             SetInt(KPostRevealDay, Today + 1);
-            // 正式出现后不再让前置模组继续发纸条；int.MaxValue 表示永久暂停。
-            PauseBaseNotesUntil(int.MaxValue);
             Log("Revealed on day " + Today);
         }
 
@@ -439,6 +443,15 @@ namespace AdmirerLona
             Log("Paused base notes until rep " + untilRep + " (now " + Reputation + ")");
         }
 
+        /// <summary>好感达到 60 后永久停止前置纸条；洛娜自己的卖药警告纸条不受影响。</summary>
+        public static void StopBaseNotes()
+        {
+            if (BaseNotesStopped) return;
+            SetBool(KBaseNotesStopped, true);
+            PauseBaseNotesUntil(int.MaxValue);
+            Log("Base notes stopped at affection " + AffectionInt);
+        }
+
         /// <summary>只暂停今天一天（洛娜揭面那天，压掉门口的纸条+礼物）。</summary>
         public static void PauseBaseNotesToday()
         {
@@ -464,6 +477,7 @@ namespace AdmirerLona
         {
             if (!Ready) return;
             CheckActivation();
+            if (Activated && AffectionInt >= 60) StopBaseNotes();
 
             // 老存档迁移：已经见过面但没有记录见面日，就从今天算起。
             if (Activated && FirstSeen && FirstMetDay < 0)
@@ -490,8 +504,10 @@ namespace AdmirerLona
 
             SetBool(KActivated, true);
             SetInt(KActivationRep, rep);
-            Affection = Math.Floor(Math.Max(0, (rep - 10) / 2.0));
+            Affection = Math.Floor(Math.Max(0, rep) / 2.0);
             SetInt(KFirstAppearDay, Today + 1);
+
+            if (!BaseNotesStopped && AffectionInt >= 60) StopBaseNotes();
 
             Log($"Activated: rep={rep} need={need} affection={Affection:0.##} firstAppearDay={Today + 1}");
         }
@@ -518,6 +534,7 @@ namespace AdmirerLona
             if (value > 100) value = 100;
             if (value < 0) value = 0;
             Affection = value;
+            if (value >= 60) StopBaseNotes();
             CheckSpecialThresholds();
         }
 
@@ -594,14 +611,6 @@ namespace AdmirerLona
                 return true;
             }
 
-            if (Revealed)
-            {
-                // 已经正式出现，之后只扣好感/计数，不再排纸条。
-                ClearPendingNote();
-                Log($"Drug sale #{count} on day {Today}; skipped note after reveal");
-                return true;
-            }
-
             SetInt(KPendingNoteDay, Today + 1);
             SetInt(KPendingNoteIndex, count);
             Log($"Drug sale #{count} on day {Today}; note queued for day {Today + 1}");
@@ -655,6 +664,7 @@ namespace AdmirerLona
                 KDrugCount, KLastDrugDay, KPendingNoteDay, KPendingNoteIndex, KLastVisitDay,
                 KFirstMetDay, KRevealed, KPostRevealDay,
                 KSeenDailyLow, KSeenDailyHigh, KDailyPoolAll,
+                KBaseNotesStopped,
                 KPendingDeliveryDay, KPendingDeliveryCategory, KPendingDeliveryCount,
                 KPendingDeliveryFree, KPendingDeliveryTier, KLastULRep,
                 KUL70Story, KUL140Story, KPendingTierStory, KPendingTierDay

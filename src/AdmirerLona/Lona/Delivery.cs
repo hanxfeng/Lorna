@@ -122,6 +122,12 @@ namespace AdmirerLona
             LonaDeliveryCategory category = Find(categoryId);
             if (category == null || count <= 0) return result;
 
+            // 酿酒是特殊职业送货：固定保证酒瓶至少 2/3，其他物品最多 1/3。
+            if (category.Id == "brewery")
+            {
+                return BuildBrewery(count);
+            }
+
             List<Func<GameItem>> pool = category.Pool(tier);
             if (pool == null || pool.Count == 0)
             {
@@ -173,6 +179,60 @@ namespace AdmirerLona
             ModEntry.Log("送货池：" + categoryId + " tier=" + tier + " 抽取=" + drawnCount
                          + " 原价值=" + totalValue + " 保留=" + result.Count + " 价值=" + keptValue
                          + " 上限=" + budget + " pool=" + pool.Count);
+            return result;
+        }
+
+        /// <summary>
+        /// 酿酒送货：酒瓶至少 2/3，其他物品最多 1/3。
+        /// 6 件 → 4 酒瓶 + 2 其他；8 件 → 6 + 2；10 件 → 7 + 3。
+        /// 现有酿酒物品总价值低于默认 1000 下限，不做价值裁剪，避免比例被删坏。
+        /// </summary>
+        private static List<GameItem> BuildBrewery(int count)
+        {
+            List<GameItem> result = new List<GameItem>();
+            int bottleCount = Mathf.CeilToInt(count * 2f / 3f);
+            for (int i = 0; i < bottleCount; i++)
+            {
+                GameItem bottle = DirectoryMaster.Item("wine_bottle");
+                if (bottle != null) result.Add(bottle);
+            }
+
+            string[] others =
+            {
+                "wine_yeast_red", "wine_yeast", "wine_superyeast",
+                "wine_berry", "wine_yeast_infinite", "water_ration"
+            };
+            List<int> bag = new List<int>();
+            int otherCount = count - result.Count;
+            for (int i = 0; i < otherCount; i++)
+            {
+                if (bag.Count == 0)
+                {
+                    for (int j = 0; j < others.Length; j++) bag.Add(j);
+                }
+                int pick = RNG.GetRandomInt(0, bag.Count - 1);
+                int index = bag[pick];
+                bag.RemoveAt(pick);
+                GameItem item = DirectoryMaster.Item(others[index]);
+                if (item != null) result.Add(item);
+            }
+
+            // 打乱顺序，避免酒瓶全排在最前面。
+            for (int i = result.Count - 1; i > 0; i--)
+            {
+                int j = RNG.GetRandomInt(0, i);
+                GameItem tmp = result[i];
+                result[i] = result[j];
+                result[j] = tmp;
+            }
+
+            long totalValue = 0L;
+            for (int i = 0; i < result.Count; i++)
+            {
+                totalValue += Math.Max(0L, result[i].GetValue(null, null));
+            }
+            ModEntry.Log("酿酒送货：件数=" + count + " 酒瓶=" + bottleCount
+                         + " 其他=" + (result.Count - bottleCount) + " 价值=" + totalValue);
             return result;
         }
 

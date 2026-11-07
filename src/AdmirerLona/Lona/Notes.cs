@@ -73,12 +73,6 @@ namespace AdmirerLona
         public static void DeliverPending()
         {
             if (!State.Ready || State.Left) return;
-            if (State.Revealed)
-            {
-                // 洛娜已经正式出现，不再让她继续往门口放纸条。
-                State.ClearPendingNote();
-                return;
-            }
             if (State.PendingNoteDay < 0 || State.PendingNoteDay != State.Today) return;
 
             int index = State.PendingNoteIndex;
@@ -108,7 +102,11 @@ namespace AdmirerLona
             }
 
             // 警告纸条出现后：暂停前置模组的纸条，直到下层区声望 +10。
-            State.PauseBaseNotesUntil(State.Reputation + 10);
+            // 好感 60 后前置纸条已经永久停止，不能再被这里的短暂停覆盖。
+            if (!State.BaseNotesStopped)
+            {
+                State.PauseBaseNotesUntil(State.Reputation + 10);
+            }
 
             ModEntry.Log("警告纸条 #" + index + " 已投放（第 " + State.Today + " 天）");
             State.ClearPendingNote();
