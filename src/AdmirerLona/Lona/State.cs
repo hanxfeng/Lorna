@@ -367,6 +367,8 @@ namespace AdmirerLona
         {
             SetBool(KRevealed, true);
             SetInt(KPostRevealDay, Today + 1);
+            // 正式出现后不再让前置模组继续发纸条；int.MaxValue 表示永久暂停。
+            PauseBaseNotesUntil(int.MaxValue);
             Log("Revealed on day " + Today);
         }
 
@@ -589,6 +591,14 @@ namespace AdmirerLona
             if (count >= 4)
             {
                 Leave("sold narcotics 4 times");
+                return true;
+            }
+
+            if (Revealed)
+            {
+                // 已经正式出现，之后只扣好感/计数，不再排纸条。
+                ClearPendingNote();
+                Log($"Drug sale #{count} on day {Today}; skipped note after reveal");
                 return true;
             }
 

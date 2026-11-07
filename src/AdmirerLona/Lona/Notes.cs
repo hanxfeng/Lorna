@@ -73,6 +73,12 @@ namespace AdmirerLona
         public static void DeliverPending()
         {
             if (!State.Ready || State.Left) return;
+            if (State.Revealed)
+            {
+                // 洛娜已经正式出现，不再让她继续往门口放纸条。
+                State.ClearPendingNote();
+                return;
+            }
             if (State.PendingNoteDay < 0 || State.PendingNoteDay != State.Today) return;
 
             int index = State.PendingNoteIndex;
