@@ -315,9 +315,8 @@ namespace AdmirerLona
             all = new List<LonaDeliveryCategory>
             {
                 new LonaDeliveryCategory("material", "lona_cat_material", "材料", false,
-                    tier => tier == 0 ? Ids("flux_agent", "scrap_metal", "printer_plastic", "nuts_metal")
-                        : tier == 1 ? Ids("common_ore", "wire", "gun_part", "rare_ore")
-                        : Ids("kotton_fabric", "metal_ingot", "kotton_fiber", "common_electronic")),
+                    tier => Ids("flux_agent", "scrap_metal", "printer_plastic", "nuts_metal",
+                        "common_ore", "wire", "gun_part", "metal_ingot", "kotton_fiber", "common_electronic")),
 
                 new LonaDeliveryCategory("tool", "lona_cat_tool", "工具", false,
                     tier => Ids("module_extractor_advanced", "module_extractor", "welder", "crowbar",
