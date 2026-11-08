@@ -29,11 +29,11 @@ namespace AdmirerLona
 
             builder.AddHeader("出现（下一位顾客，开门时生效）");
             builder.BeginGrid(2, 270f, 40f);
-            builder.AddButton("洛娜 · 来买", delegate { Force(LonaVisit.Buy, LonaStory.Daily, -1); });
-            builder.AddButton("洛娜 · 来卖", delegate { Force(LonaVisit.Sell, LonaStory.Daily, -1); });
-            builder.AddButton("小偷形态（150 前）", ForceThief);
-            builder.AddButton("初见面·第一段（买食物）", delegate { Force(LonaVisit.FirstPurchase, LonaStory.FirstMeet, -1); });
-            builder.AddButton("初见面·第二段（揭面）", delegate { Force(LonaVisit.Reveal, LonaStory.FirstMeet, -1); });
+            builder.AddButton("洛娜 · 来买", delegate { Force(LonaVisit.Buy, LonaStory.Daily); });
+            builder.AddButton("洛娜 · 来卖", delegate { Force(LonaVisit.Sell, LonaStory.Daily); });
+            builder.AddButton("小偷形态（激活前）", ForceThief);
+            builder.AddButton("初见面·第一段（买食物）", delegate { Force(LonaVisit.FirstPurchase, LonaStory.FirstMeet); });
+            builder.AddButton("初见面·第二段（揭面）", delegate { Force(LonaVisit.Reveal, LonaStory.FirstMeet); });
             builder.End();
 
             builder.AddHeader("剧情测试");
@@ -43,9 +43,9 @@ namespace AdmirerLona
 
             builder.AddHeader("特殊剧情");
             builder.BeginGrid(2, 270f, 40f);
-            builder.AddButton("好感 > 80", delegate { Force(LonaVisit.Story, LonaStory.Above80, -1); });
-            builder.AddButton("好感 > 90", delegate { Force(LonaVisit.Story, LonaStory.Above90, -1); });
-            builder.AddButton("好感 100", delegate { Force(LonaVisit.Story, LonaStory.Reach100, -1); });
+            builder.AddButton("好感 > 80", delegate { Force(LonaVisit.Story, LonaStory.Above80); });
+            builder.AddButton("好感 > 90", delegate { Force(LonaVisit.Story, LonaStory.Above90); });
+            builder.AddButton("好感 100", delegate { Force(LonaVisit.Story, LonaStory.Reach100); });
             builder.End();
 
             builder.AddHeader("警告纸条");
@@ -77,22 +77,21 @@ namespace AdmirerLona
             builder.Show();
         }
 
-        private static void Force(LonaVisit visit, LonaStory story, int tier, int dailyStory = 0)
+        private static void Force(LonaVisit visit, LonaStory story, int dailyStory = 0)
         {
             DebugForce.Pending = true;
             DebugForce.Thief = false;
             DebugForce.Visit = visit;
             DebugForce.Story = story;
-            DebugForce.DailyTier = tier;
             DebugForce.DailyStory = dailyStory;
             ModEntry.Log("已排队：下一位顾客是洛娜（" + story + (dailyStory > 0 ? " / 日常 " + dailyStory : "")
-                + " / " + visit + (tier >= 0 ? " / 档 " + tier : "") + "），开门时生效");
+                + " / " + visit + "），开门时生效");
         }
 
         private static void ForceDaily(int storyId)
         {
             LonaVisit visit = LonaText.DailyStoryTrades(storyId) ? LonaVisit.StoryBuy : LonaVisit.Story;
-            Force(visit, LonaStory.Daily, -1, storyId);
+            Force(visit, LonaStory.Daily, storyId);
         }
 
         private static void OpenStoryList()
@@ -118,14 +117,14 @@ namespace AdmirerLona
 
             builder.AddHeader("特殊剧情");
             builder.BeginGrid(3, 280f, 38f);
-            builder.AddButton("初见面·第一段", delegate { Force(LonaVisit.FirstPurchase, LonaStory.FirstMeet, -1); });
-            builder.AddButton("初见面·第二段（揭面）", delegate { Force(LonaVisit.Reveal, LonaStory.FirstMeet, -1); });
-            builder.AddButton("揭面后介绍（队首）", delegate { Force(LonaVisit.Story, LonaStory.PostReveal, -1); });
-            builder.AddButton("好感 >80", delegate { Force(LonaVisit.Story, LonaStory.Above80, -1); });
-            builder.AddButton("好感 >90", delegate { Force(LonaVisit.Story, LonaStory.Above90, -1); });
-            builder.AddButton("好感 100 告白", delegate { Force(LonaVisit.Story, LonaStory.Reach100, -1); });
-            builder.AddButton("上层区 70", delegate { Force(LonaVisit.Story, LonaStory.Upper70, -1); });
-            builder.AddButton("上层区 140", delegate { Force(LonaVisit.Story, LonaStory.Upper140, -1); });
+            builder.AddButton("初见面·第一段", delegate { Force(LonaVisit.FirstPurchase, LonaStory.FirstMeet); });
+            builder.AddButton("初见面·第二段（揭面）", delegate { Force(LonaVisit.Reveal, LonaStory.FirstMeet); });
+            builder.AddButton("揭面后介绍（队首）", delegate { Force(LonaVisit.Story, LonaStory.PostReveal); });
+            builder.AddButton("好感 >80", delegate { Force(LonaVisit.Story, LonaStory.Above80); });
+            builder.AddButton("好感 >90", delegate { Force(LonaVisit.Story, LonaStory.Above90); });
+            builder.AddButton("好感 100 告白", delegate { Force(LonaVisit.Story, LonaStory.Reach100); });
+            builder.AddButton("上层区 70", delegate { Force(LonaVisit.Story, LonaStory.Upper70); });
+            builder.AddButton("上层区 140", delegate { Force(LonaVisit.Story, LonaStory.Upper140); });
             builder.AddButton("关闭", delegate { CustomUIManager.Instance.CloseWindow(StoryWindowId); });
             builder.End();
 

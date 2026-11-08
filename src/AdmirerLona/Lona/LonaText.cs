@@ -182,6 +182,7 @@ namespace AdmirerLona
         public static string GiftHint { get { return Get("lona_gift_hint", "点击后将礼物放上柜台以送礼"); } }
         public static string GiftRefusedTooExpensive { get { return Get("lona_gift_refused_expensive", "太贵了，我不能收。"); } }
         public static string GiftRefusedForbidden { get { return Get("lona_gift_refused_forbidden", "抱歉，我讨厌这种东西。"); } }
+        public static string GiftRefusedContraband { get { return Get("lona_gift_refused_contraband", "这是违禁品，我不能收。"); } }
 
         public static string[] GiftThanks
         {
@@ -287,5 +288,37 @@ namespace AdmirerLona
                 Get("lona_ul140_04", "抱歉，我要先走了，要来不及了。")
             };
         }
+
+        // ---------------- 替换原版文本 ----------------
+        public static string DealAfterBuy() { return Get("lona_deal_after_buy", "还有别的吗？"); }
+        public static string DealAfterBuyLow() { return Get("lona_deal_after_buy_low", "就这些好了"); }
+        public static string DealAfterSell() { return Get("lona_deal_after_sell", "还需要别的吗？"); }
+        public static string DeliveryDone() { return Get("lona_delivery_done", "我走了，下次见"); }
+        public static string ShutterClose() { return Get("lona_shutter_close", "等等！唉，好吧"); }
+
+        public static string ExposeWaterGutterflow() { return Get("lona_expose_water_gutterflow", "这是沟渠水，老板，看都能看出来。"); }
+        public static string ExposeWaterRustwater() { return Get("lona_expose_water_rustwater", "这是铁锈水，有点过分哦，老板。"); }
+        public static string ExposeWaterGhostwater() { return Get("lona_expose_water_ghostwater", "这是幽灵水吧老板，我能看出来。"); }
+        public static string ExposeWaterBasewater() { return Get("lona_expose_water_basewater", "......，这只是基础水。"); }
+        public static string ExposeWaterHighquality() { return Get("lona_expose_water_highquality", "这是优质水，老板，差点就被你骗了。"); }
+        public static string ExposeWaterOther() { return Get("lona_expose_water_other", "这水的纯度有问题啊老板。"); }
+
+        public static string ExposeInjectorUnusable() { return Get("lona_expose_injector_unusable", "这注射器是不能用的，老板，你良心不会痛吗？"); }
+        public static string ExposeInjectorExpired() { return Get("lona_expose_injector_expired", "这注射器过期了老板。"); }
+        public static string ExposeInjectorLabelWrong() { return Get("lona_expose_injector_label_wrong", "这注射器标签是错的，老板。"); }
+
+        public static string ExposeChemicalPharmaGrade() { return Get("lona_expose_chemical_pharma_grade", "这是药用级，不是实验室纯级。"); }
+        public static string ExposeChemicalNearPharma() { return Get("lona_expose_chemical_near_pharma", "虽然很接近，但这不是制药级。"); }
+        public static string ExposeChemicalStreetStandard() { return Get("lona_expose_chemical_street_standard", "这东西只有街头标准。"); }
+        public static string ExposeChemicalCutProduct() { return Get("lona_expose_chemical_cut_product", "这东西掺假了，这不好哦老板。"); }
+        public static string ExposeChemicalJunkGrade() { return Get("lona_expose_chemical_junk_grade", "这个纯度也太低了，老板"); }
+        public static string ExposeChemicalStarchGrade() { return Get("lona_expose_chemical_starch_grade", "......，这只是营养果淀粉！"); }
+
+        public static string ExposeGeneric() { return Get("lona_expose_generic", "标签对不上啊，老板。"); }
+        public static string ExposeCigNotGenuine() { return Get("lona_expose_cig_not_genuine", "这是假烟！"); }
+        public static string ExposeCigIssuesWith() { return Get("lona_expose_cig_issues_with", "这盒烟{0}有问题，之后有来卖烟的记得仔细瞧瞧。"); }
+
+        public static string UnholsterFirst() { return Get("lona_unholster_first", "喂喂，冷静些老板。"); }
+        public static string UnholsterSecond() { return Get("lona_unholster_second", "我不是改造体。"); }
     }
 }

@@ -14,10 +14,11 @@ namespace AdmirerLona
         StoryBuy
     }
 
-    /// <summary>构造顾客：150 前的「小偷形态」和 150 后的「洛娜形态」。</summary>
+    /// <summary>构造顾客：激活前的「小偷形态」和激活后的「洛娜形态」。</summary>
     internal static class LonaClient
     {
         public const string LonaId = "lona";
+        public const string DeliveryTag = "lona_delivery";
 
         private static readonly string[] FoodItems =
         {
@@ -50,7 +51,7 @@ namespace AdmirerLona
         };
 
         // ---------------------------------------------------------------
-        // 150 声望之前：只是换了立绘的小偷
+        // 激活之前：只是换了立绘的小偷
         // ---------------------------------------------------------------
         public static StoreClient CreateThiefForm()
         {
@@ -89,7 +90,10 @@ namespace AdmirerLona
             client.dismissable = true;
             client.arrestable = true;
             client.cooldown = 1;
+            // 举报洛娜必定失败，和正常到访保持一致。
+            client.tryInterceptReport = delegate { return LonaBargain.OnReportThreat(client); };
             client.onReportAction = delegate { State.Leave("reported by the player"); };
+            client.AddTag(DeliveryTag);
 
             client.clientIntent = StoreClient.ClientIntent.SELL;
             client.mainDialogue.SetText(client.displayName,
@@ -104,6 +108,8 @@ namespace AdmirerLona
                 });
 
             client.AddBasicDialog();
+            client.acceptDealDialogue = null;
+            client.allDoneDialogue = BuildDeliveryDone(client);
             client.CompleteClientCreation();
             client.sourceModId = "";
             ModEntry.Log("送货顾客已构造：sprite=" + client.spriteName + " free=" + free + " items=" + items.Count);
@@ -111,9 +117,9 @@ namespace AdmirerLona
         }
 
         // ---------------------------------------------------------------
-        // 150 声望之后
+        // 激活之后
         // ---------------------------------------------------------------
-        public static StoreClient Create(LonaVisit visit, LonaStory story, int dailyTier = -1, int dailyStory = 0)
+        public static StoreClient Create(LonaVisit visit, LonaStory story, int dailyStory = 0)
         {
             Portrait.EnsureInjected();
             StoreClient client = new StoreClient();
@@ -160,10 +166,10 @@ namespace AdmirerLona
                     break;
             }
 
-            BuildDialogue(client, visit, story, dailyTier, dailyStory);
+            BuildDialogue(client, visit, story, dailyStory);
             client.AddBasicDialog();
-            client.CompleteClientCreation();
             ApplyVisitOverrides(client, visit, dailyStory);
+            client.CompleteClientCreation();
             client.sourceModId = "";
             return client;
         }
@@ -231,7 +237,7 @@ namespace AdmirerLona
         // ---------------------------------------------------------------
         // 对话
         // ---------------------------------------------------------------
-        private static void BuildDialogue(StoreClient client, LonaVisit visit, LonaStory story, int dailyTier, int dailyStory)
+        private static void BuildDialogue(StoreClient client, LonaVisit visit, LonaStory story, int dailyStory)
         {
             if (visit == LonaVisit.FirstPurchase)
             {
@@ -507,12 +513,25 @@ namespace AdmirerLona
 
             if (visit == LonaVisit.Buy)
             {
+                // 第一次成交不再播原版随机成交句；这条固定句本身就是「成交后」台词。
+                client.acceptDealDialogue = BuildDealFollowUp(client);
+                client.acceptDealDialoguePlayed = false;
+                // 成交后按最新预算决定第一句是「还有别的吗？」还是「就这些好了」。
+                client.onItemBought = delegate
+                {
+                    if (client.acceptDealDialogue == null) return;
+                    client.acceptDealDialogue.SetText(client.displayName,
+                        client.GetBudget() < 10 ? LonaText.DealAfterBuyLow() : LonaText.DealAfterBuy());
+                };
                 ApplyClosing(client, LonaText.GenericBuyClose());
                 return;
             }
 
             if (visit == LonaVisit.Sell)
             {
+                // 来卖由 BuyItem / BuyMultipleItem 走 OnDealAccepted，不需要成交句。
+                client.acceptDealDialogue = null;
+                client.acceptDealDialoguePlayed = false;
                 ApplyClosing(client, LonaText.GenericSellClose());
             }
         }
@@ -610,6 +629,90 @@ namespace AdmirerLona
             {
                 ModEntry.Log("读取展示柜失败: " + e.Message);
             }
+        }
+
+        // ---------------------------------------------------------------
+        // 成交后文本 / 固定原版替换
+        // ---------------------------------------------------------------
+        public static bool IsLona(StoreClient client)
+        {
+            return client != null && client.identifier == LonaId;
+        }
+
+        public static bool IsCurrentLona()
+        {
+            if (PlayerStore.Instance == null || PlayerStore.Instance.currentClientInstance == null) return false;
+            return IsLona(PlayerStore.Instance.currentClientInstance.GetClientBlueprint());
+        }
+
+        /// <summary>拦截原版 OnDealAccepted：不再播 dialog_deal_accepted / after_sell / after_buy。</summary>
+        public static bool HandleDealAccepted(StoreClient client, Dialogue hostLine)
+        {
+            if (!IsLona(client)) return false;
+
+            bool delivery = client.IsTag(DeliveryTag);
+            bool done = PlayerStore.Instance.currentClientInstance != null
+                && StoreClientInstance.IsClientBusinessDone(PlayerStore.Instance.currentClientInstance);
+
+            // 来买第一次成交：这条 accept 本身就是固定的「成交后」台词。
+            if (hostLine != null && hostLine == client.acceptDealDialogue)
+            {
+                if (delivery && done) hostLine.SetNextDialogue(BuildDeliveryDone(client));
+                return true;
+            }
+
+            Dialogue follow = (delivery && done) ? BuildDeliveryDone(client) : BuildDealFollowUp(client);
+            if (hostLine != null) hostLine.SetNextDialogue(follow);
+            else if (DialogUIManager.Instance != null) DialogUIManager.Instance.StartDialogue(follow);
+            return true;
+        }
+
+        private static Dialogue BuildDealFollowUp(StoreClient client)
+        {
+            string line;
+            if (client.IsTag(DeliveryTag))
+            {
+                line = LonaText.DealAfterSell();
+            }
+            else if (client.clientIntent == StoreClient.ClientIntent.BUY)
+            {
+                line = client.GetBudget() < 10 ? LonaText.DealAfterBuyLow() : LonaText.DealAfterBuy();
+            }
+            else
+            {
+                line = LonaText.DealAfterSell();
+            }
+            return BuildLine(client, line);
+        }
+
+        private static Dialogue BuildDeliveryDone(StoreClient client)
+        {
+            Dialogue done = BuildLine(client, LonaText.DeliveryDone());
+            done.SetEndAction(DismissLona);
+            return done;
+        }
+
+        private static Dialogue BuildLine(StoreClient client, string line)
+        {
+            Dialogue dialogue = new Dialogue();
+            dialogue.priority = 4;
+            dialogue.SetText(client.displayName, line);
+            return dialogue;
+        }
+
+        public static Dialogue BuildShutterDialogue()
+        {
+            Dialogue dialogue = new Dialogue();
+            dialogue.SetText(LonaText.DisplayName, LonaText.ShutterClose());
+            return dialogue;
+        }
+
+        public static Dialogue BuildUnholsterDialogue()
+        {
+            Dialogue dialogue = new Dialogue();
+            dialogue.SetText(LonaText.DisplayName, LonaText.UnholsterFirst());
+            dialogue.NextDialogue().SetText(LonaText.DisplayName, LonaText.UnholsterSecond());
+            return dialogue;
         }
     }
 }

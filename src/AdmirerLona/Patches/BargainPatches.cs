@@ -13,6 +13,7 @@ namespace AdmirerLona
         private static bool markupResolved;
         private static bool discountResolved;
         private static bool buyingMarkupResolved;
+        private static bool buyingDiscountResolved;
         private static readonly HashSet<Dialogue> customDialogues = new HashSet<Dialogue>();
 
         public static bool Prepare()
@@ -28,6 +29,7 @@ namespace AdmirerLona
                 markupResolved = false;
                 discountResolved = false;
                 buyingMarkupResolved = false;
+                buyingDiscountResolved = false;
             }
             return client != null && client.identifier == LonaClient.LonaId;
         }
@@ -94,6 +96,14 @@ namespace AdmirerLona
                 result = Build("lona_bargain_markup_accept", false);
                 return true;
             }
+            if (ui.BuyingDiscountOffered)
+            {
+                if (buyingDiscountResolved) return false;
+                buyingDiscountResolved = true;
+                bool big = ui.BuyingDiscountPercent >= 50;
+                result = Build(big ? "lona_bargain_buying_discount_very_accept" : "lona_bargain_buying_discount_accept", false);
+                return true;
+            }
             if (markupResolved || !ui.MarkupOffered) return false;
             markupResolved = true;
             State.AddAffection(-1.0);
@@ -109,10 +119,27 @@ namespace AdmirerLona
                 result = Build("lona_bargain_markup_refuse", true);
                 return true;
             }
+            if (ui.BuyingDiscountOffered)
+            {
+                if (buyingDiscountResolved) return false;
+                buyingDiscountResolved = true;
+                bool big = ui.BuyingDiscountPercent >= 50;
+                result = Build(big ? "lona_bargain_buying_discount_hard_reject" : "lona_bargain_buying_discount_reject", false);
+                return true;
+            }
             if (markupResolved || !ui.MarkupOffered) return false;
             markupResolved = true;
             State.AddAffection(-5.0);
             result = Build("lona_bargain_markup_refuse", true);
+            return true;
+        }
+
+        /// <summary>电话送货压价失败后选择离开：固定一句。</summary>
+        public static bool TryLeave(BargainUIManager ui, ref Dialogue result)
+        {
+            if (!Prepare()) return false;
+            if (!ui.BuyingDiscountOffered) return false;
+            result = Build("lona_bargain_buying_discount_leave", false);
             return true;
         }
 
@@ -200,6 +227,15 @@ namespace AdmirerLona
             if (!LonaBargain.Prepare()) return true;
             __result = LonaBargain.Build("lona_bargain_report", false);
             return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(BargainUIManager), "CreateLeaveDialog")]
+    internal static class Patch_LonaBargainLeave
+    {
+        private static bool Prefix(BargainUIManager __instance, ref Dialogue __result)
+        {
+            return !LonaBargain.TryLeave(__instance, ref __result);
         }
     }
 

@@ -18,10 +18,30 @@ namespace AdmirerLona
 
         public static bool IsNarcoticSale(GameItem item)
         {
-            if (item == null || item.identifier == null) return false;
+            if (item == null) return false;
+            if (IsNarcoticId(item.identifier)) return true;
+
+            // 容器里的药也算：卖掉一盒/一箱时检查所有子物品。
+            try
+            {
+                foreach (GameItem child in item.FindAllChildItems())
+                {
+                    if (IsNarcoticId(child.identifier)) return true;
+                }
+            }
+            catch (Exception e)
+            {
+                ModEntry.Log("检查容器内药品失败: " + e.Message);
+            }
+            return false;
+        }
+
+        private static bool IsNarcoticId(string identifier)
+        {
+            if (string.IsNullOrEmpty(identifier)) return false;
             for (int i = 0; i < NarcoticItems.Length; i++)
             {
-                if (item.identifier == NarcoticItems[i]) return true;
+                if (identifier == NarcoticItems[i]) return true;
             }
             return false;
         }
@@ -30,6 +50,20 @@ namespace AdmirerLona
         {
             if (!IsNarcoticSale(item)) return;
             State.RegisterDrugSale();
+        }
+
+        /// <summary>以物易物：只检查玩家交出去的物品列表，购买收到的物品不在这里。</summary>
+        public static void OnItemsSold(List<GameItem> items)
+        {
+            if (items == null) return;
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (IsNarcoticSale(items[i]))
+                {
+                    State.RegisterDrugSale();
+                    return;
+                }
+            }
         }
 
         /// <summary>「一键清空柜台」不走 SellItem，成交前先看一眼柜台里有没有药。</summary>
@@ -73,7 +107,8 @@ namespace AdmirerLona
         public static void DeliverPending()
         {
             if (!State.Ready || State.Left) return;
-            if (State.PendingNoteDay < 0 || State.PendingNoteDay != State.Today) return;
+            // 跳过一天也补发：下一次开门时只要日期已经到/超过待投放日就投放。
+            if (State.PendingNoteDay < 0 || State.Today < State.PendingNoteDay) return;
 
             int index = State.PendingNoteIndex;
             string body = LonaText.DrugNote(index);
@@ -128,7 +163,6 @@ namespace AdmirerLona
         private static int state = StUnknown;
         private static string reason;
 
-        public static bool Checked { get { return state != StUnknown; } }
         public static string Reason { get { return reason; } }
 
         public static bool Ok

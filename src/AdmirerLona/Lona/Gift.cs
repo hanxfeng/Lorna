@@ -75,9 +75,14 @@ namespace AdmirerLona
         {
             if (!State.GiftMode || !IsGiftClient() || item == null) return false;
 
-            if (IsNarcotic(item) || ContrabandHelper.IsContraband(item))
+            if (IsNarcotic(item))
             {
                 QueueLines(LonaText.GiftRefusedForbidden);
+                return true;
+            }
+            if (ContrabandHelper.IsContraband(item))
+            {
+                QueueLines(LonaText.GiftRefusedContraband);
                 return true;
             }
             if (State.AffectionInt < 80 && ValueOf(item) > 300)

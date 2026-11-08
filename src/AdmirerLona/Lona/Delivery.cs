@@ -50,9 +50,6 @@ namespace AdmirerLona
     /// <summary>洛娜电话送货：物品池、档位、预约和到店。</summary>
     internal static class Delivery
     {
-        public const int DefaultBaseCooldown = 3;
-        public const int DefaultSpecialCooldown = 5;
-
         private static List<LonaDeliveryCategory> all;
 
         public static List<LonaDeliveryCategory> All

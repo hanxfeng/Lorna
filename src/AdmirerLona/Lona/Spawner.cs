@@ -11,14 +11,12 @@ namespace AdmirerLona
         public static bool Thief;
         public static LonaVisit Visit = LonaVisit.Buy;
         public static LonaStory Story = LonaStory.Daily;
-        public static int DailyTier = -1;
         public static int DailyStory;
 
         public static void Clear()
         {
             Pending = false;
             Thief = false;
-            DailyTier = -1;
             DailyStory = 0;
             Visit = LonaVisit.Buy;
             Story = LonaStory.Daily;
@@ -34,7 +32,7 @@ namespace AdmirerLona
         /// <summary>临时值：两次到访之间至少隔几天。</summary>
         public const int CooldownDays = 3;
 
-        /// <summary>150 声望之前顶替小偷的概率（百分比）。</summary>
+        /// <summary>激活之前顶替小偷的概率（百分比）。</summary>
         public const int ThiefReplaceChance = 10;
 
         /// <summary>第一次见面之后，隔几天来揭面。</summary>
@@ -112,7 +110,7 @@ namespace AdmirerLona
 
                 if (tierStoryQueued) return;
 
-                // ---- 150 声望之前：小偷/扒手/食物窃贼有 10% 概率换成她的立绘 ----
+                // ---- 激活之前：小偷/扒手/食物窃贼有 10% 概率换成她的立绘 ----
                 if (!State.Activated)
                 {
                     TryReplaceThiefSprite(manager);
@@ -191,7 +189,7 @@ namespace AdmirerLona
                     {
                         bool trade = LonaText.DailyStoryTrades(storyId);
                         LonaVisit storyVisit = trade ? LonaVisit.StoryBuy : LonaVisit.Story;
-                        StoreClient storyClient = LonaClient.Create(storyVisit, LonaStory.Daily, -1, storyId);
+                        StoreClient storyClient = LonaClient.Create(storyVisit, LonaStory.Daily, storyId);
                         if (LonaText.DailyStoryQueueHead(storyId)) InsertFront(manager, storyClient);
                         else if (!ReplaceFirstThief(manager, storyClient)) manager.AddClient(storyClient);
                         State.MarkVisited();
@@ -270,7 +268,7 @@ namespace AdmirerLona
             }
             else
             {
-                client = LonaClient.Create(DebugForce.Visit, DebugForce.Story, DebugForce.DailyTier, DebugForce.DailyStory);
+                client = LonaClient.Create(DebugForce.Visit, DebugForce.Story, DebugForce.DailyStory);
                 ModEntry.Log("调试：剧情 " + DebugForce.Story + " / 到访 " + DebugForce.Visit + " 已排队");
             }
             InsertFront(manager, client);
@@ -311,7 +309,7 @@ namespace AdmirerLona
         }
 
         /// <summary>
-        /// 150 声望之前：把队列里第一个小偷/扒手/食物窃贼的立绘换成洛娜。
+        /// 激活之前：把队列里第一个小偷/扒手/食物窃贼的立绘换成洛娜。
         /// 只改 spriteName —— identifier、displayName、对话、批发折扣和上货表全部保持原样，
         /// 所以行为和原来那一种小偷完全一致，也不会写任何状态或触发剧情。
         /// </summary>

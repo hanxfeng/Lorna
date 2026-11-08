@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using HarmonyLib;
 
 namespace AdmirerLona
@@ -6,15 +7,24 @@ namespace AdmirerLona
     [HarmonyPatch(typeof(PlayerStore), nameof(PlayerStore.SellItem))]
     internal static class Patch_SellItem
     {
-        private static bool Prefix(GameItem item)
+        private static bool Prefix(GameItem item, out bool __state)
         {
-            if (Gift.ShouldBlock(item)) return false;
+            __state = false;
+            if (Gift.ShouldBlock(item))
+            {
+                // Harmony 即使 Prefix 返回 false 也仍会执行 Postfix；
+                // 这里主动退出送礼状态，Postfix 用 __state 跳过后续结算。
+                Gift.Disarm();
+                return false;
+            }
             Gift.Capture(item);
+            __state = true;
             return true;
         }
 
-        private static void Postfix(GameItem item)
+        private static void Postfix(GameItem item, bool __state)
         {
+            if (!__state) return;
             Gift.OnSold(item);
             Notes.OnItemSold(item);
         }
@@ -25,19 +35,47 @@ namespace AdmirerLona
     internal static class Patch_SellAllItemFromTable
     {
         private static int cashBefore;
+        private static int countBefore;
         private static bool hasNarcotic;
 
         private static void Prefix()
         {
             cashBefore = PlayerStore.Instance != null ? PlayerStore.Instance.playerCash : 0;
+            countBefore = 0;
+            if (EmporiumEntry.Instance != null && EmporiumEntry.Instance.backInvinvElement != null)
+            {
+                countBefore = EmporiumEntry.Instance.backInvinvElement.childItems.Count;
+            }
             hasNarcotic = Notes.ContainsNarcoticInBackInventory();
         }
 
         private static void Postfix()
         {
             if (!hasNarcotic) return;
-            if (PlayerStore.Instance == null || PlayerStore.Instance.playerCash <= cashBefore) return;
-            State.RegisterDrugSale();
+
+            int countAfter = 0;
+            if (EmporiumEntry.Instance != null && EmporiumEntry.Instance.backInvinvElement != null)
+            {
+                countAfter = EmporiumEntry.Instance.backInvinvElement.childItems.Count;
+            }
+
+            // 物品被清掉（即使 0 元成交）或现金增加，都说明这次清空确实成交了。
+            bool sold = countAfter < countBefore
+                || (PlayerStore.Instance != null && PlayerStore.Instance.playerCash > cashBefore);
+            if (sold) State.RegisterDrugSale();
+        }
+    }
+
+    /// <summary>
+    /// 以物易物：OnItemsSold 只包含玩家交出去的物品（出售方），
+    /// 玩家收到的物品不在这个列表里，所以不会把“买入”当成卖药。
+    /// </summary>
+    [HarmonyPatch(typeof(PlayerStore), nameof(PlayerStore.OnItemsSold))]
+    internal static class Patch_OnItemsSold
+    {
+        private static void Postfix(List<GameItem> gameItems)
+        {
+            Notes.OnItemsSold(gameItems);
         }
     }
 }

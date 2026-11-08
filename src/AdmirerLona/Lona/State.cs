@@ -596,6 +596,7 @@ namespace AdmirerLona
         public static bool RegisterDrugSale()
         {
             if (!Ready) return false;
+            if (Left) return false;                    // 已经永久离开，不再计数
             if (Today < 2) return false;               // 存档第 1 天不生效
             if (GetInt(KLastDrugDay, -1000) == Today) return false; // 一天多次只算一次
 

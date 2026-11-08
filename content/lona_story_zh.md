@@ -5,7 +5,7 @@
 ## lona_daily_01
 今天要忙死了
 突然有好几批货物要重新核对
-中午都没吃饭，有吃的没
+中午都没吃饭，有什么吃的吗？
 
 ## lona_daily_02
 最近真是越来越冷了
@@ -57,7 +57,7 @@
 
 ## lona_daily_09
 今天整理了下账本
-花在你这的信用点还真不少
+发现花在你这的信用点还真不少
 不过都是必要的开销
 而且你这里的东西也挺不错的
 那我先走了，改天再来看看。
@@ -108,7 +108,7 @@
 突然很怀念上学的时候
 那时总觉得时间很多，事情可以慢慢做
 现在连翻翻书的时间都挤不出来了
-好了，我得走了，改天再来和你聊聊。
+好了，我得走了，改天再来和你聊。
 
 ## lona_daily_17
 今天发工资了
@@ -141,6 +141,7 @@
 今天休息，没什么事做
 来你这里看看有什么需要帮忙的吗？
 不需要，好吧，那我在旁边坐一会
+......
 那我先回去了，下次有空再来找你。
 
 ## lona_daily_22
@@ -163,7 +164,7 @@
 今天下班的时候去以前上学的地方转了转
 那里翻新了几次，已经认不太出来了
 以前总觉得努力学习，离开下层区就会好起来
-后来发现，没有，就算离开了下层区，也改变不了什么
+后来发现，就算离开了下层区，也改变不了什么
 反而还不如在下层区过的舒服
 好了，我先回去了，下次再跟你说说以前的事。
 
@@ -211,27 +212,30 @@
 
 ## lona_daily_29
 有时候觉得自己蛮奇怪的
-专门绕几分钟的路过来就为了和你说几句话
-天不早了，我该走了，再见。
+专门绕几分钟的路过来就为了和你说几句话。
 
 ## lona_daily_31
 今天难得自己做了顿饭
 虽然手忙脚乱，但至少成品不错
 应该也给你带一份的
 你总是忙起来就忘了吃饭
-我明天再来，记得按时吃饭，别让我担心。
+我先走了，记得按时吃饭。
 
 ## lona_daily_32
 突然发现
 我现在每天最期待的事
 就是每天下班之后来你这呆一会
 在你这里，感觉一天的疲惫都消失了
-那我先回去了，明天下班后再来见你。
+......
+......
+今天就待到这吧，我先走了，明天见。
 
 ## lona_daily_33
 昨天加班到很晚
 所以没有来这
 我好想你
+......
+不打扰你了，我先走了，再见。
 
 ## lona_daily_34
 你最近好忙
@@ -249,7 +253,7 @@
 ……
 
 ## lona_daily_01_close
-这些够我吃一段时间了，再见。
+这些够我先顶一下了，再见。
 
 ## lona_daily_12_close
 老板再见。
@@ -317,7 +321,7 @@
 
 # ---------------- 通用买卖 ----------------
 ## lona_generic_buy_intro
-老板~，我来买点东西，最好是吃的，日用品也行，有药什么的也少来点。
+老板~，我来买点东西，最好是吃的，日用品也行，有药什么的也可以少来点。
 
 ## lona_generic_buy_close
 就要这些好了，下次见。
@@ -363,8 +367,100 @@
 
 ## lona_bargain_report
 你怀疑我是罪犯？
-呵，随你举报，他们查不到证据的。
+呵，真失望。
 
 ## lona_bargain_accuse_aug
 你怀疑我是改造体？
 呵，再见！
+
+# ---------------- 替换原版文本（成交/议价/鉴定/关店/拔枪） ----------------
+
+## lona_deal_after_buy
+还有别的吗？
+
+## lona_deal_after_buy_low
+就这些好了
+
+## lona_deal_after_sell
+还需要别的吗？
+
+## lona_delivery_done
+我走了，下次见
+
+## lona_shutter_close
+等等！唉，好吧
+
+## lona_bargain_buying_discount_accept
+好吧，给你算便宜点
+
+## lona_bargain_buying_discount_very_accept
+太黑了吧老板，不过都这么熟了，这次给你算便宜点好了
+
+## lona_bargain_buying_discount_reject
+抱歉，最近比较缺钱，不能给你便宜点。
+
+## lona_bargain_buying_discount_hard_reject
+你给的价太低了，我也要吃饭的。
+
+## lona_bargain_buying_discount_leave
+你出的价格太低了，我还是换一家卖吧。
+
+## lona_expose_water_gutterflow
+这是沟渠水，老板，看都能看出来。
+
+## lona_expose_water_rustwater
+这是铁锈水，有点过分哦，老板。
+
+## lona_expose_water_ghostwater
+这是幽灵水吧老板，我能看出来。
+
+## lona_expose_water_basewater
+......，这只是基础水。
+
+## lona_expose_water_highquality
+这是优质水，老板，差点就被你骗了。
+
+## lona_expose_water_other
+这水的纯度有问题啊老板。
+
+## lona_expose_injector_unusable
+这注射器是不能用的，老板，你良心不会痛吗？
+
+## lona_expose_injector_expired
+这注射器过期了老板。
+
+## lona_expose_injector_label_wrong
+这注射器标签是错的，老板。
+
+## lona_expose_chemical_pharma_grade
+这是药用级，不是实验室纯级。
+
+## lona_expose_chemical_near_pharma
+虽然很接近，但这不是制药级。
+
+## lona_expose_chemical_street_standard
+这东西只有街头标准。
+
+## lona_expose_chemical_cut_product
+这东西掺假了，这不好哦老板。
+
+## lona_expose_chemical_junk_grade
+这个纯度也太低了，老板
+
+## lona_expose_chemical_starch_grade
+......，这只是营养果淀粉！
+
+## lona_expose_generic
+标签对不上啊，老板。
+
+## lona_expose_cig_not_genuine
+这是假烟！
+
+## lona_expose_cig_issues_with
+这盒烟{0}有问题，之后有来卖烟的记得仔细瞧瞧。
+
+## lona_unholster_first
+喂喂，冷静些老板。
+
+## lona_unholster_second
+我不是改造体。
