@@ -19,14 +19,21 @@ namespace AdmirerLona
         public static bool IsNarcoticSale(GameItem item)
         {
             if (item == null) return false;
+
+            // 钥匙卡物资箱（含开锁后的状态）：箱子里的梦尘不算玩家卖药。
+            if (IsKeycardLockedContainer(item)) return false;
+
             if (IsNarcoticId(item.identifier)) return true;
 
-            // 容器里的药也算：卖掉一盒/一箱时检查所有子物品。
+            // 容器里的药也算；但遇到钥匙卡箱子时不再往下检查它的内容。
             try
             {
-                foreach (GameItem child in item.FindAllChildItems())
+                if (item.contentWindow != null && item.contentWindow.child is GameInventory inventory)
                 {
-                    if (IsNarcoticId(child.identifier)) return true;
+                    foreach (GameItem child in inventory.childItems)
+                    {
+                        if (IsNarcoticSale(child)) return true;
+                    }
                 }
             }
             catch (Exception e)
@@ -34,6 +41,21 @@ namespace AdmirerLona
                 ModEntry.Log("检查容器内药品失败: " + e.Message);
             }
             return false;
+        }
+
+        private static bool IsKeycardLockedContainer(GameItem item)
+        {
+            if (item == null || !item.IsTag("LOCKED_CONTAINER_TAG")) return false;
+            try
+            {
+                string lockId = item.GetTagReadonly("LOCK_ID").GetString();
+                return !string.IsNullOrEmpty(lockId)
+                    && lockId.StartsWith("LOCK_ID_", StringComparison.Ordinal);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private static bool IsNarcoticId(string identifier)
