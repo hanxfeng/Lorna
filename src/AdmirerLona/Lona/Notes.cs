@@ -107,6 +107,12 @@ namespace AdmirerLona
         public static void DeliverPending()
         {
             if (!State.Ready || State.Left) return;
+            // 取消「麻醉品买卖」后不再发放警告纸条；已有待投放的也一并取消。
+            if (!State.NarcoticTradeValue)
+            {
+                State.ClearPendingNote();
+                return;
+            }
             // 跳过一天也补发：下一次开门时只要日期已经到/超过待投放日就投放。
             if (State.PendingNoteDay < 0 || State.Today < State.PendingNoteDay) return;
 

@@ -28,6 +28,12 @@ namespace AdmirerLona
         /// <summary>播完全部日常剧情后，是否把所有日常剧情重新加入池子轮播。</summary>
         public static ConfigEntry<bool> ReplayDailyStories;
 
+        /// <summary>麻醉品买卖：勾选=四次离开/警告纸条；取消=每次出售 -5 好感、不发纸条、不离开。</summary>
+        public static ConfigEntry<bool> NarcoticTrade;
+
+        /// <summary>取消勾选时，同一帧内的多件连续出售只扣一次。</summary>
+        private static int lastSoftDrugSaleFrame = -1;
+
         /// <summary>立绘固定缩放：1 = 与原版顾客同尺寸（世界尺寸 2.88 × 2.11）。</summary>
         public const float FixedPortraitScale = 1f;
 
@@ -60,6 +66,11 @@ namespace AdmirerLona
         public static bool ReplayDailyStoriesValue
         {
             get { return ReplayDailyStories == null || ReplayDailyStories.Value; }
+        }
+
+        public static bool NarcoticTradeValue
+        {
+            get { return NarcoticTrade == null || NarcoticTrade.Value; }
         }
 
         private const string KActivated = "activated";
@@ -150,6 +161,11 @@ namespace AdmirerLona
                 "replay_daily_stories", true, "Lorna",
                 () => "轮播日常剧情",
                 tooltip: () => "勾选：所有日常剧情播完后，把所有日常剧情重新加入池子继续随机抽取。不勾选：播完后不再出现日常剧情，洛娜之后只进行常规买卖。");
+
+            NarcoticTrade = config.Define(
+                "narcotic_trade", true, "Lorna",
+                () => "麻醉品买卖",
+                tooltip: () => "勾选：出售芬太片/梦尘超过 3 次后洛娜永久离开，1–3 次次日出现警告纸条。不勾选：不再发警告纸条、不会因此离开；每次出售降低 5 好感（按出售次数，不按数量，最低 0）。");
         }
 
         // ---------------------------------------------------------------
@@ -598,6 +614,21 @@ namespace AdmirerLona
             if (!Ready) return false;
             if (Left) return false;                    // 已经永久离开，不再计数
             if (Today < 2) return false;               // 存档第 1 天不生效
+
+            // 取消「麻醉品买卖」：不计数、不发纸条、不离开；每次出售 -5 好感。
+            // 同一帧内 SellMultiple 会连续调用多次，这里只扣一次（不按物品数量）。
+            if (!NarcoticTradeValue)
+            {
+                if (lastSoftDrugSaleFrame == Time.frameCount) return false;
+                lastSoftDrugSaleFrame = Time.frameCount;
+                if (Activated && Affection > 0)
+                {
+                    AddAffection(-5.0);
+                }
+                Log("Soft drug sale on day " + Today + "; affection -5");
+                return true;
+            }
+
             if (GetInt(KLastDrugDay, -1000) == Today) return false; // 一天多次只算一次
 
             SetInt(KLastDrugDay, Today);
