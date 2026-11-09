@@ -126,6 +126,8 @@ namespace AdmirerLona
         public static void Reset()
         {
             Disarm();
+            messageScheduled = false;
+            pendingLines = null;
         }
 
         private static bool IsNarcotic(GameItem item)
@@ -161,7 +163,10 @@ namespace AdmirerLona
             messageScheduled = true;
             try
             {
-                DialogUIManager.Instance.StartCoroutine(ShowMessageNextFrame());
+                if (LonaCoroutineHost.Run(ShowMessageNextFrame()) == null)
+                {
+                    messageScheduled = false;
+                }
             }
             catch (Exception e)
             {

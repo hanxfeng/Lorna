@@ -31,6 +31,8 @@ namespace AdmirerLona
 
         public void OnEnable()
         {
+            LonaCoroutineHost.Ensure();
+
             ModHook.OnGameLoadedInit += OnRunLoaded;
             ModHook.OnShutterOpenedEarly += OnShutterOpened;
             ModHook.OnGenerateCustomerVeryLate += Spawner.OnGenerate;
@@ -46,6 +48,9 @@ namespace AdmirerLona
 
         public void OnDisable()
         {
+            Gift.Reset();
+            LonaCoroutineHost.DestroyHost();
+
             ModHook.OnGameLoadedInit -= OnRunLoaded;
             ModHook.OnShutterOpenedEarly -= OnShutterOpened;
             ModHook.OnGenerateCustomerVeryLate -= Spawner.OnGenerate;

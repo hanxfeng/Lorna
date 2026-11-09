@@ -18,7 +18,8 @@
   <Assemblies>
     <Assembly>AdmirerLona.dll</Assembly>
   </Assemblies>
-  <!-- What your code does beyond the game's API: files, network, process, dynamic-code, native, reflection-external.
+  <!-- What your code does beyond the game's API: files, network, process, steam, steam-auth.
+       dynamic-code, native, reflection-external and threads are retired and refused from 2026-12-10.
        Most mods need none. Check with the console command: mod-scan admirer_lona -->
   <Capabilities />
 </Manifest>

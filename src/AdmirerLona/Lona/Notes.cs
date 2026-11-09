@@ -177,9 +177,9 @@ namespace AdmirerLona
     }
 
     /// <summary>
-    /// 检测前置模组的私有存档键是否还在。
-    /// 做法：读它的 DLL，在字符串堆里找 UTF-16 的 "npc_seen_" / "npc_done_"。
-    /// 找不到就把洛娜整体停用，并在 F8 控制台报错（不给普通玩家弹窗）。
+    /// 前置检查：优先读取前置 DLL 检查私有存档键；
+    /// 新版的 ModHelper 文件 API 只保证读取自身模组文件夹，
+    /// 读不到时降级为只检查前置已加载，不阻止模组运行。
     /// </summary>
     internal static class BaseModSchema
     {
@@ -208,10 +208,10 @@ namespace AdmirerLona
             reason = null;
 
             LoadedMod mod = ModLoader.Mods.Find(m => m.Manifest != null && m.Manifest.ID == State.BaseModId);
-            if (mod == null)
+            if (mod == null || !mod.IsEnabled || mod.LoadError != null)
             {
                 state = StMissing;
-                reason = "前置模组 Enhanced_Secret_Admirers_And_More_News 未安装或未启用";
+                reason = "前置模组 Enhanced_Secret_Admirers_And_More_News 未安装、未启用或加载失败";
                 Debug.LogError("[AdmirerLona] " + reason + "，洛娜功能已停用。");
                 return;
             }
@@ -219,27 +219,27 @@ namespace AdmirerLona
             try
             {
                 byte[] bytes = ModHelper.ReadModFileBytes(State.BaseModId, "PawnshopMod.dll");
-                if (bytes == null || bytes.Length == 0)
+                if (bytes != null && bytes.Length > 0)
                 {
-                    reason = "读不到前置模组的 PawnshopMod.dll";
-                }
-                else if (!ContainsUtf16(bytes, "npc_seen_") || !ContainsUtf16(bytes, "npc_done_"))
-                {
-                    reason = "前置模组的私有存档键名已变更（找不到 npc_seen_ / npc_done_）";
-                }
-                else
-                {
+                    if (!ContainsUtf16(bytes, "npc_seen_") || !ContainsUtf16(bytes, "npc_done_"))
+                    {
+                        reason = "前置模组的私有存档键名已变更（找不到 npc_seen_ / npc_done_）";
+                        Debug.LogError("[AdmirerLona] " + reason + "。洛娜功能已停用（不弹窗，按 F8 查看）。");
+                        return;
+                    }
+
                     state = StOk;
                     return;
                 }
+
+                ModEntry.Log("前置 DLL 字节检查不可用（新版文件 API 只保证读取自身模组文件夹），改为只检查前置加载状态。");
             }
             catch (Exception e)
             {
-                reason = "检查前置模组失败: " + e.Message;
+                ModEntry.Log("前置 DLL 字节检查失败，改为只检查前置加载状态: " + e.Message);
             }
 
-            state = StBroken;
-            Debug.LogError("[AdmirerLona] " + reason + "。洛娜功能已停用（不弹窗，按 F8 查看）。");
+            state = StOk;
         }
 
         public static void Reset()
