@@ -67,6 +67,28 @@ namespace AdmirerLona
     }
 
     /// <summary>
+    /// 100 好感免费送货：买入价仍由 FreeFeature 压到 0；
+    /// 成交后移除 free，使玩家转卖时恢复物品原价。
+    /// </summary>
+    [HarmonyPatch(typeof(PlayerStore), nameof(PlayerStore.BuyItem))]
+    internal static class Patch_FreeDeliveryItem
+    {
+        private static void Postfix(GameItem item)
+        {
+            if (item == null) return;
+            if (PlayerStore.Instance == null || PlayerStore.Instance.currentClientInstance == null) return;
+
+            StoreClient client = PlayerStore.Instance.currentClientInstance.GetClientBlueprint();
+            if (client == null || !client.IsTag(LonaClient.DeliveryTag)) return;
+
+            if (item.FindItemFeatureByID("free") != null)
+            {
+                item.RemoveItemFeatureByID("free");
+            }
+        }
+    }
+
+    /// <summary>
     /// 以物易物：OnItemsSold 只包含玩家交出去的物品（出售方），
     /// 玩家收到的物品不在这个列表里，所以不会把“买入”当成卖药。
     /// </summary>
