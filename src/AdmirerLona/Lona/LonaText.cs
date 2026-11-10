@@ -243,9 +243,9 @@ namespace AdmirerLona
         public static string PhoneStatus() { return Get("lona_phone_status", "问问近况。"); }
         public static string PhoneStatusLine() { return Get("lona_phone_status_line", "最近……还算不错。"); }
 
-        public static string PhoneAffection(double value)
+        public static string PhoneAffection(int value)
         {
-            return string.Format(Get("lona_phone_affection", "好感度：{0} / 100"), value.ToString("0.#"));
+            return string.Format(Get("lona_phone_affection", "好感度：{0} / 100"), value);
         }
 
         public static string PhoneBusyFirst() { return Get("lona_phone_busy_1", "抱歉，最近不能给你带东西"); }

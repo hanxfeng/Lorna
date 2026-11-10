@@ -150,7 +150,7 @@ namespace AdmirerLona
             status.SetText(LonaText.DisplayName, LonaText.PhoneStatusLine());
 
             Dialogue affection = status.NextDialogue();
-            affection.SetText(LonaText.DisplayName, LonaText.PhoneAffection(State.Affection));
+            affection.SetText(LonaText.DisplayName, LonaText.PhoneAffection(State.AffectionInt));
             affection.SetEndAction(EndCall);
             return status;
         }

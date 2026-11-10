@@ -298,6 +298,7 @@ namespace AdmirerLona
         /// <summary>
         /// 开门时检查上层区声望是否跨过 70 / 140。只在本局内第一次跨过时排队，
         /// 剧情当天直接插到队首；老存档里已经超过的值不会补触发。
+        /// 140 剧情必须好感达到 100；如果先到 140、后到 100，会在好感满后的开门补触发。
         /// </summary>
         public static void TrackUpperTier()
         {
@@ -315,22 +316,19 @@ namespace AdmirerLona
                 return;
             }
 
-            if (current > last)
-            {
-                bool done70 = GetBool(KUL70Story);
-                bool done140 = GetBool(KUL140Story);
+            bool done70 = GetBool(KUL70Story);
+            bool done140 = GetBool(KUL140Story);
 
-                if (current >= 140 && !done140)
-                {
-                    SetBool(KUL140Story, true);
-                    SetBool(KUL70Story, true);
-                    QueueTierStory((int)LonaStory.Upper140, Today);
-                }
-                else if (current >= 70 && !done70)
-                {
-                    SetBool(KUL70Story, true);
-                    QueueTierStory((int)LonaStory.Upper70, Today);
-                }
+            if (current >= 140 && !done140 && State.AffectionInt >= 100)
+            {
+                SetBool(KUL140Story, true);
+                SetBool(KUL70Story, true);
+                QueueTierStory((int)LonaStory.Upper140, Today);
+            }
+            else if (current > last && current >= 70 && !done70)
+            {
+                SetBool(KUL70Story, true);
+                QueueTierStory((int)LonaStory.Upper70, Today);
             }
 
             SetInt(KLastULRep, current);
