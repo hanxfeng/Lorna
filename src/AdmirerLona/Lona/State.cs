@@ -535,16 +535,24 @@ namespace AdmirerLona
         }
 
         /// <summary>下层区声望变化后调用（before 为变化前的值）。</summary>
-        public static void OnLowerRepChanged(double before)
+        public static void OnLowerRepChanged(double before, double requestedDelta = 0)
         {
             if (!Ready) return;
 
             StoreReputation faction = StoreReputation.GetStoreReputation("FACTION_LOWER_LEVEL");
             double after = faction != null ? faction.GetReputationExact() : Reputation;
 
-            if (Activated && after > before)
+            double delta = after - before;
+            // 声望已经 200 封顶时，实际增量被 CheckReputation 吃掉；
+            // 用本次请求的正面增量继续折算好感，声望数值本身仍不超过 200。
+            if (delta <= 0 && after >= 200 && requestedDelta > 0)
             {
-                AddAffection((after - before) * 0.5);
+                delta = requestedDelta;
+            }
+
+            if (Activated && delta > 0)
+            {
+                AddAffection(delta * 0.5);
             }
             CheckActivation();
         }

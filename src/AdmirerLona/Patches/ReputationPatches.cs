@@ -15,11 +15,16 @@ namespace AdmirerLona
             __state = __instance != null ? __instance.GetReputationExact() : 0.0;
         }
 
-        private static void Postfix(StoreReputation __instance, double __state)
+        private static void Postfix(StoreReputation __instance, double __state, double modValue)
         {
             if (__instance == null) return;
             if (!string.Equals(__instance.factionId, StoreReputation.FACTION_LOWER_LEVEL)) return;
-            State.OnLowerRepChanged(__state);
+            double requested = modValue;
+            if (requested > 0)
+            {
+                requested *= (double)Difficulty.Rules.reputationGainMultiplier;
+            }
+            State.OnLowerRepChanged(__state, requested);
         }
     }
 
@@ -31,11 +36,11 @@ namespace AdmirerLona
             __state = __instance != null ? __instance.GetReputationExact() : 0.0;
         }
 
-        private static void Postfix(StoreReputation __instance, double __state)
+        private static void Postfix(StoreReputation __instance, double __state, double modValue)
         {
             if (__instance == null) return;
             if (!string.Equals(__instance.factionId, StoreReputation.FACTION_LOWER_LEVEL)) return;
-            State.OnLowerRepChanged(__state);
+            State.OnLowerRepChanged(__state, modValue);
         }
     }
 }

@@ -125,6 +125,12 @@ namespace AdmirerLona
                 return BuildBrewery(count);
             }
 
+            // 水培农场解锁植物基因后：DNA 数据盘至少 2/3，和酿酒酒瓶一样不做价值裁剪。
+            if (category.Id == "farm" && Upgrade("PLANT_DNA"))
+            {
+                return BuildFarmWithDna(tier, count);
+            }
+
             List<Func<GameItem>> pool = category.Pool(tier);
             if (pool == null || pool.Count == 0)
             {
@@ -176,6 +182,69 @@ namespace AdmirerLona
             ModEntry.Log("送货池：" + categoryId + " tier=" + tier + " 抽取=" + drawnCount
                          + " 原价值=" + totalValue + " 保留=" + result.Count + " 价值=" + keptValue
                          + " 上限=" + budget + " pool=" + pool.Count);
+            return result;
+        }
+
+        private static List<Func<GameItem>> FarmPool(bool includeDna)
+        {
+            List<Func<GameItem>> pool = Ids("bloomberry_seed", "nutrifruit_seed", "nutrifruit_seed_packet",
+                "fillerweed_seed", "kotton_seed", "nutrient_tablet_container", "dream_cap_seed",
+                "hydroreed_seed");
+            if (includeDna && Upgrade("PLANT_DNA"))
+            {
+                pool.Add(IdString("plant_dna_disk"));
+            }
+            return pool;
+        }
+
+        /// <summary>
+        /// 水培农场在解锁植物基因后：DNA 数据盘至少 2/3，其他水培物品最多 1/3。
+        /// 与酿酒一样，件数固定，不做价值裁剪。
+        /// </summary>
+        private static List<GameItem> BuildFarmWithDna(int tier, int count)
+        {
+            List<GameItem> result = new List<GameItem>();
+            int dnaCount = Mathf.CeilToInt(count * 2f / 3f);
+            for (int i = 0; i < dnaCount; i++)
+            {
+                GameItem disk = DirectoryMaster.Item("plant_dna_disk");
+                if (disk != null) result.Add(disk);
+            }
+
+            List<Func<GameItem>> pool = FarmPool(false);
+            List<int> bag = new List<int>();
+            int otherCount = count - dnaCount;
+            for (int i = 0; i < otherCount; i++)
+            {
+                if (pool.Count == 0) break;
+                if (bag.Count == 0)
+                {
+                    for (int j = 0; j < pool.Count; j++) bag.Add(j);
+                }
+                int pick = RNG.GetRandomInt(0, bag.Count - 1);
+                int index = bag[pick];
+                bag.RemoveAt(pick);
+                try
+                {
+                    GameItem item = pool[index]();
+                    if (item != null) result.Add(item);
+                }
+                catch (Exception e)
+                {
+                    ModEntry.Log("水培送货物品生成失败: " + e.Message);
+                }
+            }
+
+            for (int i = result.Count - 1; i > 0; i--)
+            {
+                int j = RNG.GetRandomInt(0, i);
+                GameItem tmp = result[i];
+                result[i] = result[j];
+                result[j] = tmp;
+            }
+
+            ModEntry.Log("水培DNA送货：件数=" + count + " DNA=" + dnaCount
+                         + " 其他=" + (result.Count - dnaCount) + " tier=" + tier);
             return result;
         }
 
@@ -345,9 +414,7 @@ namespace AdmirerLona
                             "large_purple_injector", "salve", "pink_injector")),
 
                 new LonaDeliveryCategory("farm", "lona_cat_farm", "水培农场", true,
-                    tier => Ids("bloomberry_seed", "nutrifruit_seed", "nutrifruit_seed_packet",
-                        "fillerweed_seed", "kotton_seed", "nutrient_tablet_container", "dream_cap_seed",
-                        "hydroreed_seed"),
+                    tier => FarmPool(true),
                     () => StartType(NewGameData.StartType.FARMER) || Upgrade("RETIRED_FARMER")),
 
                 new LonaDeliveryCategory("aquaculture", "lona_cat_aquaculture", "水产养殖", true,
